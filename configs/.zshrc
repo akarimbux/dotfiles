@@ -28,6 +28,14 @@ alias la="ls -lha"              # Include hidden files
 alias cls="clear"               # Clear screen
 alias ..="cd .."
 
+# Optional enhanced directory listings
+if (( $+commands[eza] )); then
+  alias e='eza'
+  alias el='eza --long --header --git'
+  alias ea='eza --long --all --header --git'
+  alias et='eza --tree --level=2'
+fi
+
 # Enable prompt substitution
 setopt PROMPT_SUBST
 
