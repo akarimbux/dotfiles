@@ -93,3 +93,40 @@ fi
 if [[ -f ~/.zshrc.local ]]; then
   source ~/.zshrc.local
 fi
+
+# Optional fuzzy search: Ctrl-R history, Ctrl-T files, Alt-C directories
+if (( $+commands[fzf] )); then
+  if _fzf_init=$(fzf --zsh 2>/dev/null); then
+    eval "$_fzf_init"
+  else
+    # Older fzf packages provide integration as separate scripts.
+    for _fzf_dir in "$HOME/.fzf/shell" \
+      "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/fzf/shell" \
+      /usr/local/opt/fzf/shell /usr/share/fzf /usr/share/doc/fzf/examples; do
+      if [[ -r "$_fzf_dir/key-bindings.zsh" ]]; then
+        [[ ! -r "$_fzf_dir/completion.zsh" ]] || source "$_fzf_dir/completion.zsh"
+        source "$_fzf_dir/key-bindings.zsh"
+        break
+      fi
+    done
+  fi
+  unset _fzf_init _fzf_dir
+fi
+
+# Learn frequently visited directories; jump with z and select with zi.
+if (( $+commands[zoxide] )); then
+  eval "$(zoxide init zsh)"
+fi
+
+# Optional plugins installed by a package manager or cloned locally.
+for _plugin in zsh-autosuggestions zsh-syntax-highlighting; do
+  for _plugin_root in "${ZSH_PLUGIN_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins}" \
+    "$HOME/.zsh" "${HOMEBREW_PREFIX:-/opt/homebrew}/share" \
+    /usr/local/share /usr/share; do
+    if [[ -r "$_plugin_root/$_plugin/$_plugin.zsh" ]]; then
+      source "$_plugin_root/$_plugin/$_plugin.zsh"
+      break
+    fi
+  done
+done
+unset _plugin _plugin_root
