@@ -22,7 +22,7 @@ alias ..="cd .."
 
 # Environment variables
 typeset -U path
-path=("$HOME/bin" "$HOME/.local/bin" "$HOME/.codeium/windsurf/bin" $path)
+path=("$HOME/bin" "$HOME/.local/bin" $path)
 export PATH
 
 # Enable prompt substitution
