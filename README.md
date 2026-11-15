@@ -155,10 +155,33 @@ Given a file with an `items` list, print each item's name:
 jq -r '.items[] | .name' data.json
 ```
 
+### Reading your prompt
+
+The left side shows your active Python environment, user, host, and current
+directory. The right side shows your repository name, path within the
+repository, branch, and whether it has uncommitted changes.
+
+For example, inside `src/api` on branch `feature/login`:
+
+```text
+[py:my-project/.venv] you@laptop ~/projects/my-project/src/api ❯
+                                      my-project/src/api | feature/login ✗
+```
+
+The Git information sits at the right edge of the same terminal line.
+`✔` means clean; `✗` means there are changes, including untracked files.
+A detached checkout shows `detached@` followed by its short commit ID.
+
+The Python label updates when you activate or deactivate an environment.
+It supports virtual environments (including uv) and Conda. A folder called
+`.venv` includes its parent project's name so you can tell environments
+apart. No active environment means no Python label; outside a repository,
+the Git label disappears. Merely creating a `.venv` doesn't activate it.
+
 ### What else is included?
 
 - A prompt showing your current directory and, inside Git repositories,
-  the branch and whether there are uncommitted changes.
+  your path within the repository, branch, and whether there are uncommitted changes.
 - Shared command history across terminals, with duplicate entries removed.
 - Command suggestions from your history and syntax highlighting, when the
   plugins are installed.

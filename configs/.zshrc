@@ -66,25 +66,47 @@ fi
 # Enable prompt substitution
 setopt PROMPT_SUBST
 
-# Show Git information only when repository status is available
+# Render environments ourselves so activation does not add a second label.
+export VIRTUAL_ENV_DISABLE_PROMPT=1
+export CONDA_CHANGEPS1=false
+
+python_env_prompt() {
+  local env_path env_name
+  if [[ -n ${VIRTUAL_ENV:-} ]]; then
+    env_path=${VIRTUAL_ENV%/}
+    env_name=${env_path:t}
+    if [[ $env_name == .venv || $env_name == venv ]]; then
+      env_name="${env_path:h:t}/$env_name"
+    fi
+  elif [[ -n ${CONDA_DEFAULT_ENV:-} ]]; then
+    env_name=$CONDA_DEFAULT_ENV
+  else
+    return 0
+  fi
+  print -r -- "%F{magenta}[py:${env_name//\%/%%}]%f "
+}
+
+# Show the repository, path from its root, branch, and working-tree status.
 git_prompt() {
-  local branch status_output indicator
+  local root prefix location branch status_output indicator
+  root=$(git rev-parse --show-toplevel 2>/dev/null) || return 0
+  prefix=$(git rev-parse --show-prefix 2>/dev/null) || return 0
+  location="${root:t}"
+  [[ -z $prefix ]] || location+="/${prefix%/}"
   branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null) ||
-    branch=$(git rev-parse --short HEAD 2>/dev/null) || return
-  status_output=$(git status --porcelain 2>/dev/null) || return
+    branch="detached@$(git rev-parse --short HEAD 2>/dev/null)" || return 0
+  status_output=$(git status --porcelain 2>/dev/null) || return 0
   if [[ -n $status_output ]]; then
     indicator='%F{red}✗%f'
   else
     indicator='%F{green}✔%f'
   fi
-  # Escape percent signs in branch names before prompt expansion.
-  print -r -- "${branch//\%/%%} $indicator"
+  # Escape percent signs in names before Zsh interprets prompt formatting.
+  print -r -- "%F{blue}${location//\%/%%}%f | ${branch//\%/%%} $indicator"
 }
 
 RPROMPT='$(git_prompt)'
-
-# Display current path in PROMPT
-PROMPT='%F{cyan}%n@%m%f %F{white}%~%f %F{yellow}❯ %f'
+PROMPT='$(python_env_prompt)%F{cyan}%n@%m%f %F{white}%~%f %F{yellow}❯ %f'
 
 # Keybindings for navigation
 bindkey '^[[H' beginning-of-line  # Home key
