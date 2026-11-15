@@ -155,9 +155,9 @@ done
 unset _local_config
 
 # Optional fuzzy search: Ctrl-R history, Ctrl-T files, Alt-C directories
-if (( $+commands[fzf] )); then
+if (( $+commands[fzf] )) && [[ -t 0 ]]; then
   if _fzf_init=$(fzf --zsh 2>/dev/null); then
-    [[ ! -o zle ]] || eval "$_fzf_init"
+    eval "$_fzf_init"
   else
     # Older fzf packages provide integration as separate scripts.
     for _fzf_dir in "$HOME/.fzf/shell" \

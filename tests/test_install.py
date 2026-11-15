@@ -186,9 +186,14 @@ INSTALLER
         shell_dir.mkdir(parents=True)
         (shell_dir / 'key-bindings.zsh').write_text('export FZF_FALLBACK_LOADED=yes\n')
         self.run_install()
-        result = subprocess.run(
-            [shutil.which('zsh'), '-ic', 'dothelp shortcuts; print -r -- "$FZF_FALLBACK_LOADED"'],
-            cwd=self.root, env=self.env, text=True, capture_output=True, timeout=10)
+        master, slave = os.openpty()
+        try:
+            result = subprocess.run(
+                [shutil.which('zsh'), '-ic', 'dothelp shortcuts; print -r -- "$FZF_FALLBACK_LOADED"'],
+                stdin=slave, cwd=self.root, env=self.env, text=True, capture_output=True, timeout=10)
+        finally:
+            os.close(slave)
+            os.close(master)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('## At your fingertips', result.stdout)
         self.assertTrue(result.stdout.rstrip().endswith('yes'))
