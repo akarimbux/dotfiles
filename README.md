@@ -36,9 +36,12 @@ Already cloned this repository? Open that folder and run
 It backs up your existing `~/.zshrc`, then links this setup in its place.
 A `.zshrc` file contains the settings Zsh loads when you open a terminal.
 
-With `--with-tools`, it also installs Zsh, Git, eza, jq, fzf, zoxide, and
+With `--with-tools`, it also installs Zsh, Git, eza, jq, fzf, zoxide, uv, and
 the suggestion and highlighting plugins. It uses Homebrew on macOS or apt
-on Debian/Ubuntu. Apt may ask for your password.
+on Debian/Ubuntu. On Linux it installs uv into `~/.local/bin` using
+[uv's official installer](https://docs.astral.sh/uv/getting-started/installation/),
+without changing your shell files. Existing uv installations are kept.
+Apt may ask for your password.
 
 You can run the installer again; it keeps the link if it's already set up.
 Your `~/.zshrc.local` and `~/.zsh_aliases` files are left alone.
@@ -80,6 +83,8 @@ open another shell, choose Zsh in your terminal settings.
 | Show a directory tree, two levels deep | `et` |
 | Clear the screen | `cls` |
 | Go up one directory | `..` |
+| Create or activate this folder's Python environment | `venv` |
+| Create an environment with a particular Python version | `venv 3.13` |
 
 In an fzf search, type to narrow the list, use **Up / Down** to move,
 **Enter** to choose, or **Ctrl-C** to cancel.
@@ -87,6 +92,54 @@ In an fzf search, type to narrow the list, use **Up / Down** to move,
 Fuzzy search shortcuts need fzf. Directory jumps need zoxide, which learns
 as you visit folders. The eza shortcuts appear when eza is installed.
 Your usual `ls`, `ll`, and `la` commands are still available.
+
+### Python projects with uv
+
+uv manages Python versions, project dependencies, and isolated environments.
+The installer adds uv; Python versions are downloaded when you ask for them.
+It doesn't replace your system Python or activate environments automatically.
+
+For a folder of scripts, run:
+
+```sh
+cd your-project
+venv 3.13
+uv pip install requests
+python your_script.py
+deactivate
+```
+
+`venv` creates a `.venv` folder if needed and activates it in your current
+terminal. Next time, run `venv` to activate the same environment. If one
+already exists, `venv 3.13` asks you to reuse it without a version rather
+than replacing it. Add `.venv/` to your project's `.gitignore`.
+
+For a project with tracked dependencies, use uv directly:
+
+```sh
+uv init my-project
+cd my-project
+uv python pin 3.13
+uv add requests
+uv run python main.py
+```
+
+For an existing uv project, `uv sync` creates or updates its environment
+from its project files and lockfile. `uv run` runs commands in that
+environment without manual activation. Commit `pyproject.toml`, `uv.lock`,
+and `.python-version` so others can reproduce your setup.
+
+To download a Python version explicitly: `uv python install 3.13`.
+To install a standalone Python CLI: `uv tool install ruff`.
+
+Already using this setup? Get the update and install uv:
+
+```sh
+cd "$HOME/.dotfiles"
+git pull --ff-only
+bash install.sh --with-tools
+exec zsh
+```
 
 ### Working with JSON
 
@@ -109,8 +162,7 @@ jq -r '.items[] | .name' data.json
 - Shared command history across terminals, with duplicate entries removed.
 - Command suggestions from your history and syntax highlighting, when the
   plugins are installed.
-- Completion for `uv` and `uvx`, if you already have them installed.
-  The installer doesn't install uv.
+- Completion for `uv` and `uvx`, plus the `venv` environment helper.
 
 ## Make it yours
 
@@ -188,7 +240,7 @@ echo "${ZDOTDIR:-$HOME}"
 On macOS:
 
 ```sh
-brew install zsh git eza jq fzf zoxide zsh-autosuggestions zsh-syntax-highlighting
+brew install zsh git eza jq fzf zoxide zsh-autosuggestions zsh-syntax-highlighting uv
 ```
 
 On Debian/Ubuntu, where the packages are available:
@@ -200,6 +252,7 @@ sudo apt install zsh git eza jq fzf zoxide zsh-autosuggestions zsh-syntax-highli
 
 If eza isn't available in your Linux repositories, see its
 [installation guide](https://github.com/eza-community/eza/blob/main/INSTALL.md).
+For uv, use its [installation guide](https://docs.astral.sh/uv/getting-started/installation/).
 
 You can also clone the Zsh plugins into your home folder:
 

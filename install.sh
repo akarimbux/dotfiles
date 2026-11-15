@@ -6,8 +6,8 @@ usage() {
 Usage: bash install.sh [--with-tools] [--dry-run]
 
 Link configs/.zshrc into ${ZDOTDIR:-$HOME}, backing up any existing file.
-  --with-tools  Install zsh, git, eza, jq, fzf, zoxide and the two Zsh plugins
-                using Homebrew (macOS) or apt (Debian/Ubuntu).
+  --with-tools  Install zsh, git, eza, jq, fzf, zoxide, uv and two Zsh plugins.
+                Uses Homebrew (macOS), or apt plus uv's installer (Linux).
   --dry-run     Print planned changes without writing files or installing tools.
   -h, --help    Show this help.
 
@@ -59,7 +59,7 @@ install_tools() {
         printf 'Install Homebrew first: https://brew.sh\n' >&2
         return 1
       fi
-      run brew install zsh git eza jq fzf zoxide zsh-autosuggestions zsh-syntax-highlighting
+      run brew install zsh git eza jq fzf zoxide zsh-autosuggestions zsh-syntax-highlighting uv
       ;;
     Linux)
       if ! command -v apt-get >/dev/null 2>&1; then
@@ -73,7 +73,7 @@ install_tools() {
         fi
       fi
       apt_run update
-      for package in zsh git eza jq fzf zoxide zsh-autosuggestions zsh-syntax-highlighting; do
+      for package in zsh git eza jq fzf zoxide zsh-autosuggestions zsh-syntax-highlighting curl ca-certificates; do
         if $dry_run || apt-cache show "$package" >/dev/null 2>&1; then
           packages+=("$package")
         else
@@ -83,12 +83,36 @@ install_tools() {
       if [[ -n ${packages[0]+present} ]]; then
         apt_run install -y "${packages[@]}"
       fi
+      install_uv
       ;;
     *)
       printf 'Automatic tool installation is not supported on %s. Run without --with-tools.\n' "$os" >&2
       return 1
       ;;
   esac
+}
+
+install_uv() {
+  local uv_dir=${UV_INSTALL_DIR:-$HOME/.local/bin}
+  local download_dir
+  if command -v uv >/dev/null 2>&1 || [[ -x "$uv_dir/uv" ]]; then
+    printf 'uv is already installed; keeping the existing version.\n'
+    return
+  fi
+  if $dry_run; then
+    printf 'Would download https://astral.sh/uv/install.sh and install uv into %s (without editing shell files).\n' "$uv_dir"
+    return
+  fi
+  download_dir=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-uv.XXXXXXXX")
+  if ! run curl --proto '=https' --tlsv1.2 -LsSf https://astral.sh/uv/install.sh -o "$download_dir/install.sh"; then
+    rm -rf -- "$download_dir"
+    return 1
+  fi
+  if ! run env UV_INSTALL_DIR="$uv_dir" UV_NO_MODIFY_PATH=1 sh "$download_dir/install.sh"; then
+    rm -rf -- "$download_dir"
+    return 1
+  fi
+  rm -rf -- "$download_dir"
 }
 
 apt_run() {

@@ -27,12 +27,24 @@ class InstallTests(unittest.TestCase):
         self.bin.mkdir()
         self.log = self.root / "commands.log"
         self.env = dict(os.environ, ZDOTDIR=str(self.target),
-                        PATH=str(self.bin) + os.pathsep + os.environ["PATH"],
+                        PATH=str(self.bin) + os.pathsep + '/usr/bin:/bin',
+                        UV_INSTALL_DIR=str(self.root / 'uv bin'),
                         TEST_LOG=str(self.log))
         self.mock("uname", "printf 'Linux\\n'\n")
         self.mock("apt-get", 'printf "apt-get %s\\n" "$*" >> "$TEST_LOG"\n')
         self.mock("apt-cache", '[ "$2" != eza ]\n')
         self.mock("sudo", 'exec "$@"\n')
+        self.mock("curl", '''
+printf 'curl\\n' >> "$TEST_LOG"
+while [ "$1" != -o ]; do shift; done
+shift
+cat > "$1" <<'INSTALLER'
+printf 'uv-installer %s\\n' "$UV_NO_MODIFY_PATH" >> "$TEST_LOG"
+mkdir -p "$UV_INSTALL_DIR"
+printf '#!/bin/sh\\nexit 0\\n' > "$UV_INSTALL_DIR/uv"
+chmod +x "$UV_INSTALL_DIR/uv"
+INSTALLER
+''')
 
     def mock(self, name, body):
         file = self.bin / name
@@ -112,6 +124,24 @@ class InstallTests(unittest.TestCase):
         self.mock("brew", 'printf "brew %s\\n" "$*" >> "$TEST_LOG"\n')
         self.run_install("--with-tools")
         self.assertIn("brew install zsh git eza jq fzf zoxide", self.log.read_text())
+        self.assertIn("zsh-syntax-highlighting uv", self.log.read_text())
+
+    def test_uv_installed_without_editing_shell_files(self):
+        self.run_install("--with-tools")
+        self.assertIn("uv-installer 1", self.log.read_text())
+        self.assertTrue((Path(self.env['UV_INSTALL_DIR']) / 'uv').is_file())
+
+    def test_existing_uv_is_kept(self):
+        self.mock("uv", "exit 0\n")
+        self.run_install("--with-tools")
+        self.assertNotIn("curl", self.log.read_text().splitlines())
+
+    def test_failed_uv_download_leaves_existing_config_intact(self):
+        self.link.write_text('original')
+        self.mock("curl", "exit 1\n")
+        self.run_install("--with-tools", success=False)
+        self.assertEqual(self.link.read_text(), 'original')
+        self.assertEqual(self.backups(), [])
 
     def test_package_failure_leaves_existing_config_intact(self):
         self.link.write_text("original")
