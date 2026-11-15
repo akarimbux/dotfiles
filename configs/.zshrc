@@ -5,18 +5,13 @@ export PATH
 
 # Find the guide beside this sourced config, following the installed symlink.
 typeset -g DOTFILES_MANUAL="${${(%):-%x}:A:h:h}/REFERENCE.md"
+typeset -g DOTFILES_HELPER="${${(%):-%x}:A:h}/dothelp.sh"
 dothelp() {
-  if [[ ! -r $DOTFILES_MANUAL ]]; then
-    print -u2 -- "Setup guide not found: $DOTFILES_MANUAL"
+  if [[ ! -r $DOTFILES_HELPER ]]; then
+    print -u2 -- "Setup helper not found: $DOTFILES_HELPER"
     return 1
   fi
-  if (( $+commands[glow] )); then
-    command glow -p "$DOTFILES_MANUAL"
-  elif [[ -t 1 ]] && (( $+commands[less] )); then
-    command less "$DOTFILES_MANUAL"
-  else
-    command cat "$DOTFILES_MANUAL"
-  fi
+  DOTFILES_MANUAL="$DOTFILES_MANUAL" command bash "$DOTFILES_HELPER" "$@"
 }
 
 # Enable extended globbing and better autocompletion
@@ -62,8 +57,7 @@ venv() {
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
 SAVEHIST=10000
-setopt HIST_IGNORE_ALL_DUPS    # Remove older duplicates from history
-setopt SHARE_HISTORY           # Share history across terminals
+setopt HIST_IGNORE_ALL_DUPS SHARE_HISTORY
 
 # Aliases
 alias ll="ls -lh"               # Long format with human-readable sizes
@@ -149,23 +143,16 @@ else
 fi
 
 # Improve directory navigation
-setopt AUTO_CD  # Automatically change to a directory without `cd`
-setopt PUSHD_TO_HOME
-setopt AUTO_PUSHD
-setopt PUSHD_IGNORE_DUPS
+setopt AUTO_CD AUTO_PUSHD PUSHD_TO_HOME PUSHD_IGNORE_DUPS
 
 # Custom behavior for less
 export LESS='-R'
 
-# Source custom scripts if any
-if [[ -f ~/.zsh_aliases ]]; then
-  source ~/.zsh_aliases
-fi
-
-# Machine-specific settings and overrides
-if [[ -f ~/.zshrc.local ]]; then
-  source ~/.zshrc.local
-fi
+# Personal aliases first, then machine-specific overrides.
+for _local_config in ~/.zsh_aliases ~/.zshrc.local; do
+  [[ ! -f $_local_config ]] || source "$_local_config"
+done
+unset _local_config
 
 # Optional fuzzy search: Ctrl-R history, Ctrl-T files, Alt-C directories
 if (( $+commands[fzf] )); then

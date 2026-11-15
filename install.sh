@@ -35,6 +35,10 @@ if [[ ! -f "$source_file" ]]; then
   printf 'Missing %s. Run the installer from a complete repository checkout.\n' "$source_file" >&2
   exit 1
 fi
+if [[ -d $target_dir && "$(cd -- "$target_dir" && pwd -P)" == "$repo_dir/configs" ]]; then
+  printf 'Refusing to replace the source config in %s.\n' "$target_dir" >&2
+  exit 1
+fi
 if [[ -d "$target_file" ]]; then
   printf 'Refusing to replace a directory: %s\n' "$target_file" >&2
   exit 1
@@ -66,11 +70,9 @@ install_tools() {
         printf 'Automatic tool installation supports macOS/Homebrew and Debian/Ubuntu/apt.\nRun without --with-tools and install tools with your package manager.\n' >&2
         return 1
       fi
-      if (( EUID != 0 )); then
-        if ! command -v sudo >/dev/null 2>&1; then
-          printf 'sudo is needed for apt installation. Run without --with-tools to install only the config.\n' >&2
-          return 1
-        fi
+      if (( EUID != 0 )) && ! command -v sudo >/dev/null 2>&1; then
+        printf 'sudo is needed for apt installation. Run without --with-tools to install only the config.\n' >&2
+        return 1
       fi
       apt_run update
       for package in zsh git eza jq fzf zoxide zsh-autosuggestions zsh-syntax-highlighting curl ca-certificates; do
@@ -80,7 +82,7 @@ install_tools() {
           printf 'Skipping unavailable package: %s (optional integrations remain disabled).\n' "$package" >&2
         fi
       done
-      if [[ -n ${packages[0]+present} ]]; then
+      if (( ${#packages[@]} )); then
         apt_run install -y "${packages[@]}"
       fi
       install_uv
@@ -92,7 +94,8 @@ install_tools() {
   esac
 }
 
-install_uv() {
+# A subshell scopes the cleanup trap to this download.
+install_uv() (
   local uv_dir=${UV_INSTALL_DIR:-$HOME/.local/bin}
   local download_dir
   if command -v uv >/dev/null 2>&1 || [[ -x "$uv_dir/uv" ]]; then
@@ -104,16 +107,10 @@ install_uv() {
     return
   fi
   download_dir=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-uv.XXXXXXXX")
-  if ! run curl --proto '=https' --tlsv1.2 -LsSf https://astral.sh/uv/install.sh -o "$download_dir/install.sh"; then
-    rm -rf -- "$download_dir"
-    return 1
-  fi
-  if ! run env UV_INSTALL_DIR="$uv_dir" UV_NO_MODIFY_PATH=1 sh "$download_dir/install.sh"; then
-    rm -rf -- "$download_dir"
-    return 1
-  fi
-  rm -rf -- "$download_dir"
-}
+  trap 'rm -rf -- "$download_dir"' EXIT
+  run curl --proto '=https' --tlsv1.2 -LsSf https://astral.sh/uv/install.sh -o "$download_dir/install.sh"
+  run env UV_INSTALL_DIR="$uv_dir" UV_NO_MODIFY_PATH=1 sh "$download_dir/install.sh"
+)
 
 apt_run() {
   if (( EUID == 0 )); then

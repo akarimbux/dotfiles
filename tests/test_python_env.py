@@ -30,7 +30,7 @@ fi
 ''')
         uv.chmod(0o755)
         self.log = self.root / 'uv.log'
-        self.env = dict(os.environ, PATH=str(self.bin) + ':/usr/bin:/bin',
+        self.env = dict(os.environ, HOME=str(self.root), PATH=str(self.bin) + ':/usr/bin:/bin',
                         ZDOTDIR=str(self.root), TEST_LOG=str(self.log),
                         TEST_CONFIG=str(ROOT / 'configs/.zshrc'))
 
