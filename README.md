@@ -7,7 +7,7 @@ Zsh is the shell that reads your commands. This repository holds its settings
 and an installer to help you get set up on another computer.
 
 For the full setup reference, run `dothelp` in a new Zsh terminal or read
-[dotfiles(7)](dotfiles.7). You can also open it locally:
+[the terminal setup reference](REFERENCE.md). You can also open the terminal manual locally:
 
 ```sh
 man -l ./dotfiles.7
