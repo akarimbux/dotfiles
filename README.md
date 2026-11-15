@@ -6,10 +6,18 @@ quick directory jumps, readable file listings, and a Git prompt.
 Zsh is the shell that reads your commands. This repository holds its settings
 and an installer to help you get set up on another computer.
 
-For the full setup reference, run `dothelp` in a new Zsh terminal or read
-[the terminal setup reference](REFERENCE.md). `dothelp` displays the Markdown
-guide with [Glow](https://github.com/charmbracelet/glow) when installed, or
-falls back to `less` or plain text. No manual viewer is required.
+Run `dothelp` for an interactive topic menu, or jump straight to an answer:
+
+```sh
+dothelp python       # Environments and uv
+dothelp shortcuts    # Keys and everyday commands
+dothelp prompt       # Understand the prompt
+dothelp --all        # Complete guide
+```
+
+The menu is searchable with fzf; without it, choose a number or type a topic.
+[Glow](https://github.com/charmbracelet/glow) adds styled Markdown; `less` or
+plain text works without it. You can also read [the guide on GitHub](REFERENCE.md).
 
 ## Get started
 

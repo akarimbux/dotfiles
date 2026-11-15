@@ -12,7 +12,22 @@ A field guide to your Zsh setup.
 
 ---
 
-> **Need this in your terminal?** Run `dothelp` from any directory. For styled Markdown, install [Glow](https://github.com/charmbracelet/glow). Without Glow, the guide opens in `less` or prints as plain text.
+> **Help from anywhere:** `dothelp` opens a topic menu. Type to search with fzf, or choose a number without it. [Glow](https://github.com/charmbracelet/glow) adds styling; `less` or plain text is the fallback.
+
+| Jump straight to… | Command |
+| :--- | :--- |
+| Python environments and uv | `dothelp python` |
+| Keys and everyday commands | `dothelp shortcuts` |
+| Your prompt | `dothelp prompt` |
+| Installation | `dothelp install` |
+| Personal settings | `dothelp customize` |
+| Restoring your config | `dothelp recovery` |
+| Every topic | `dothelp --list` |
+| The complete guide | `dothelp --all` |
+
+You can also type part of a heading, such as `dothelp fresh`. Press Esc in
+fzf or Enter at an empty numbered prompt to cancel. Redirected output is
+plain Markdown, so `dothelp python > python-help.md` works without a pager.
 
 ## Get started
 

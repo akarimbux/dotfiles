@@ -5,18 +5,13 @@ export PATH
 
 # Find the guide beside this sourced config, following the installed symlink.
 typeset -g DOTFILES_MANUAL="${${(%):-%x}:A:h:h}/REFERENCE.md"
+typeset -g DOTFILES_HELPER="${${(%):-%x}:A:h}/dothelp.sh"
 dothelp() {
-  if [[ ! -r $DOTFILES_MANUAL ]]; then
-    print -u2 -- "Setup guide not found: $DOTFILES_MANUAL"
+  if [[ ! -r $DOTFILES_HELPER ]]; then
+    print -u2 -- "Setup helper not found: $DOTFILES_HELPER"
     return 1
   fi
-  if (( $+commands[glow] )); then
-    command glow -p "$DOTFILES_MANUAL"
-  elif [[ -t 1 ]] && (( $+commands[less] )); then
-    command less "$DOTFILES_MANUAL"
-  else
-    command cat "$DOTFILES_MANUAL"
-  fi
+  DOTFILES_MANUAL="$DOTFILES_MANUAL" command bash "$DOTFILES_HELPER" "$@"
 }
 
 # Enable extended globbing and better autocompletion
