@@ -36,7 +36,8 @@ jobs:
           zsh -n configs/.zshrc
           env HOME="$test_home" python3 -m unittest discover -s tests
           cd "$RUNNER_TEMP"
-          env HOME="$test_home" ZDOTDIR="$test_home" zsh -ic 'dothelp python' > topic.md
+          env HOME="$test_home" ZDOTDIR="$test_home" zsh -ic 'dothelp python' > topic.md 2> startup.log
+          test ! -s startup.log
           grep -q '## Python without the fuss' topic.md
           glow -s dark topic.md > rendered.txt
           test -s rendered.txt

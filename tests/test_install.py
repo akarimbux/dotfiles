@@ -69,7 +69,7 @@ INSTALLER
 
     def test_fresh_install_and_rerun(self):
         self.run_install()
-        self.assertEqual(self.link.readlink(), self.source)
+        self.assertEqual(self.link.resolve(), self.source.resolve())
         self.run_install()
         self.assertEqual(self.backups(), [])
 
@@ -93,7 +93,7 @@ INSTALLER
         self.assertEqual(len(self.backups()), 1)
         self.assertEqual((self.backups()[0] / ".zshrc").read_text(), "original config\n")
         self.assertEqual(local.read_text(), "local settings\n")
-        self.assertEqual(self.link.readlink(), self.source)
+        self.assertEqual(self.link.resolve(), self.source.resolve())
 
     def test_dangling_symlink_is_preserved(self):
         self.link.symlink_to("missing-old-config")
