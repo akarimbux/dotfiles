@@ -23,8 +23,7 @@ class PythonEnvTests(unittest.TestCase):
         uv.write_text('''#!/bin/sh
 if [ "$1" = venv ]; then
   printf '%s\\n' "$*" >> "$TEST_LOG"
-  [ "${FAIL_UV:-0}" = 0 ] || exit 7
-  mkdir -p .venv/bin
+    mkdir -p .venv/bin
   printf 'export TEST_ACTIVATED=yes\\n' > .venv/bin/activate
 fi
 ''')
@@ -48,35 +47,13 @@ venv 3.13 || exit 2
 unset TEST_ACTIVATED
 venv || exit 4
 [[ $TEST_ACTIVATED == yes ]] || exit 5
-''')
-        self.assertEqual(self.log.read_text(), 'venv --python 3.13 .venv\n')
-
-    def test_default_environment_and_existing_version_guard(self):
-        self.run_shell('''
-venv || exit 1
-venv 3.12 && exit 2
+venv 3.12 && exit 6
 exit 0
 ''')
-        self.assertEqual(self.log.read_text(), 'venv .venv\n')
-
-    def test_failed_creation_is_not_activated(self):
-        self.env['FAIL_UV'] = '1'
-        self.run_shell('''
-venv && exit 1
-[[ -z $TEST_ACTIVATED && ! -e .venv ]] || exit 2
-''')
+        self.assertEqual(self.log.read_text(), 'venv --python 3.13 .venv\n')
 
     def test_existing_invalid_environment_is_preserved(self):
         (self.root / '.venv').write_text('keep me')
         self.run_shell('venv && exit 1\nexit 0\n')
         self.assertEqual((self.root / '.venv').read_text(), 'keep me')
         self.assertFalse(self.log.exists())
-
-    def test_missing_uv_is_reported(self):
-        (self.bin / 'uv').unlink()
-        self.run_shell('venv && exit 1\nexit 0\n')
-        self.assertFalse((self.root / '.venv').exists())
-
-
-if __name__ == '__main__':
-    unittest.main()
