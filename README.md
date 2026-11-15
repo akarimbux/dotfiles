@@ -15,7 +15,7 @@ dothelp prompt       # Understand the prompt
 dothelp --all        # Complete guide
 ```
 
-The menu is searchable with fzf; without it, choose a number or type a topic.
+The menu is searchable with fzf; without it, `dothelp` opens the full guide.
 [Glow](https://github.com/charmbracelet/glow) adds styled Markdown; `less` or
 plain text works without it. You can also read [the guide on GitHub](REFERENCE.md).
 

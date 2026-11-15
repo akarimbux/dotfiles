@@ -12,22 +12,17 @@ A field guide to your Zsh setup.
 
 ---
 
-> **Help from anywhere:** `dothelp` opens a topic menu. Type to search with fzf, or choose a number without it. [Glow](https://github.com/charmbracelet/glow) adds styling; `less` or plain text is the fallback.
+> **Help from anywhere:** `dothelp` opens a searchable topic menu with fzf, or the full guide without it. [Glow](https://github.com/charmbracelet/glow) adds styling; `less` or plain text is the fallback.
 
-| Jump straight to… | Command |
-| :--- | :--- |
-| Python environments and uv | `dothelp python` |
-| Keys and everyday commands | `dothelp shortcuts` |
-| Your prompt | `dothelp prompt` |
-| Installation | `dothelp install` |
-| Personal settings | `dothelp customize` |
-| Restoring your config | `dothelp recovery` |
-| Every topic | `dothelp --list` |
-| The complete guide | `dothelp --all` |
+```sh
+dothelp python       # Python environments and uv
+dothelp shortcuts    # Keys and everyday commands
+dothelp prompt       # Understand your prompt
+dothelp --all        # Complete guide
+```
 
 You can also type part of a heading, such as `dothelp fresh`. Press Esc in
-fzf or Enter at an empty numbered prompt to cancel. Redirected output is
-plain Markdown, so `dothelp python > python-help.md` works without a pager.
+the menu to cancel. Redirected output is plain Markdown.
 
 ## Get started
 

@@ -39,15 +39,13 @@ Update instructions.
         script.write_text('#!/bin/sh\n' + body + '\n')
         script.chmod(0o755)
 
-    def run_help(self, *args, terminal=False, response=None):
+    def run_help(self, *args, terminal=False):
         cmd = [shutil.which('bash'), str(ROOT / 'configs/dothelp.sh'), *args]
         if not terminal:
             return subprocess.run(cmd, env=self.env, text=True, capture_output=True,
                                   timeout=5)
         master, slave = pty.openpty()
         try:
-            if response is not None:
-                os.write(master, (response + '\n').encode())
             result = subprocess.run(cmd, stdin=slave, stdout=slave,
                                     stderr=subprocess.PIPE, env=self.env,
                                     text=True, timeout=5)
@@ -76,11 +74,6 @@ Update instructions.
         self.assertNotIn('Update instructions.', result.stdout)
         self.assertEqual(list(self.root.glob('dothelp.*.md')), [])
 
-    def test_list_ignores_headings_inside_code(self):
-        result = self.run_help('--list')
-        self.assertEqual(result.stdout.splitlines(),
-                         ['At your fingertips', 'Python without the fuss', 'Keep it fresh'])
-
     def test_redirected_default_is_full_guide_even_with_glow(self):
         self.mock('glow', 'exit 99')
         result = self.run_help()
@@ -107,10 +100,10 @@ Update instructions.
         self.assertEqual(result.returncode, 0)
         self.assertNotIn('Use venv.', result.stdout)
 
-    def test_numbered_menu_without_optional_tools(self):
-        result = self.run_help(terminal=True, response='2')
+    def test_without_fzf_opens_full_guide(self):
+        result = self.run_help(terminal=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn('Choose a number', result.stdout)
+        self.assertIn('Keyboard commands.', result.stdout)
         self.assertIn('Use venv.', result.stdout)
 
     def test_less_fallback(self):
