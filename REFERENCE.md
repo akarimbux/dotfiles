@@ -12,7 +12,7 @@ A field guide to your Zsh setup.
 
 ---
 
-> **Need this in your terminal?** Run `dothelp` from any directory.
+> **Need this in your terminal?** Run `dothelp` from any directory. For styled Markdown, install [Glow](https://github.com/charmbracelet/glow). Without Glow, the guide opens in `less` or prints as plain text.
 
 ## Get started
 
@@ -73,7 +73,7 @@ In a picker: **type** to filter · **↑ ↓** to move · **Enter** to choose ·
 | `dirs` | Show the directory stack |
 | `popd` | Return through the directory stack |
 | `cls` | Clear the screen |
-| `dothelp` | Open the full terminal manual |
+| `dothelp` | Open this guide |
 
 ### A better look at your files
 
@@ -248,7 +248,7 @@ The setup adds `~/bin` and `~/.local/bin` to PATH, sets `LESS=-R`, and suppresse
 | `uv` is missing | Run the installer with `--with-tools`, then `exec zsh`. Check PATH for a custom installation directory. |
 | Shortcuts or integrations are missing | Check the corresponding tools and plugins are installed; unavailable apt packages are skipped. |
 | A new terminal opens another shell | Choose Zsh in your terminal settings. The installer leaves your default shell unchanged. |
-| `dothelp` cannot open the manual | Install your operating system's `man` viewer and keep the checkout in place. |
+| `dothelp` cannot open the guide | Keep the checkout and its `REFERENCE.md` in place. |
 
 **Known installer limitation:** do not set `ZDOTDIR` to this checkout's `configs` directory. The current installer can replace its own source with a self-referencing link.
 

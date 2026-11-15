@@ -7,13 +7,9 @@ Zsh is the shell that reads your commands. This repository holds its settings
 and an installer to help you get set up on another computer.
 
 For the full setup reference, run `dothelp` in a new Zsh terminal or read
-[the terminal setup reference](REFERENCE.md). You can also open the terminal manual locally:
-
-```sh
-man -l ./dotfiles.7
-```
-
-On macOS, use `man ./dotfiles.7`.
+[the terminal setup reference](REFERENCE.md). `dothelp` displays the Markdown
+guide with [Glow](https://github.com/charmbracelet/glow) when installed, or
+falls back to `less` or plain text. No manual viewer is required.
 
 ## Get started
 
