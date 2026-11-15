@@ -149,6 +149,50 @@ INSTALLER
         self.assertIn('## Python without the fuss', result.stdout)
         self.assertNotIn('## Make it yours', result.stdout)
 
+    @unittest.skipUnless(shutil.which('zsh'), 'Requires Zsh')
+    def test_new_shell_reads_guide_updates_without_reinstalling(self):
+        self.run_install()
+        guide = self.repo / 'README.md'
+        guide.write_text(guide.read_text().replace(
+            '## Python without the fuss', '## Python without the fuss\n\nUpdated guide marker.'))
+        result = subprocess.run(
+            [shutil.which('zsh'), '-ic', 'dothelp python'],
+            cwd=self.root, env=self.env, text=True, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Updated guide marker.', result.stdout)
+        self.assertIn('## Python without the fuss', result.stdout)
+        self.assertNotIn('## Make it yours', result.stdout)
+
+    @unittest.skipUnless(shutil.which('zsh'), 'Requires Zsh')
+    def test_documented_restore_recovers_previous_shell(self):
+        self.link.write_text('export RESTORED_CONFIG=yes\n')
+        self.run_install()
+        backup = self.backups()[0] / '.zshrc'
+        subprocess.run(['mv', '-i', str(self.link), str(self.target / '.zshrc.dotfiles-link')],
+                       check=True, capture_output=True)
+        subprocess.run(['mv', '-i', str(backup), str(self.link)],
+                       check=True, capture_output=True)
+        result = subprocess.run(
+            [shutil.which('zsh'), '-ic', 'print -r -- "$RESTORED_CONFIG"'],
+            cwd=self.root, env=self.env, text=True, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), 'yes')
+        self.assertFalse(self.link.is_symlink())
+
+    @unittest.skipUnless(shutil.which('zsh'), 'Requires Zsh')
+    def test_older_fzf_shell_integration_loads_after_install(self):
+        self.mock('fzf', 'exit 1\n')
+        shell_dir = self.root / '.fzf/shell'
+        shell_dir.mkdir(parents=True)
+        (shell_dir / 'key-bindings.zsh').write_text('export FZF_FALLBACK_LOADED=yes\n')
+        self.run_install()
+        result = subprocess.run(
+            [shutil.which('zsh'), '-ic', 'dothelp shortcuts; print -r -- "$FZF_FALLBACK_LOADED"'],
+            cwd=self.root, env=self.env, text=True, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('## At your fingertips', result.stdout)
+        self.assertTrue(result.stdout.rstrip().endswith('yes'))
+
     def test_unavailable_glow_is_optional(self):
         self.mock('apt-cache', '[ "$2" != glow ]\n')
         result = self.run_install('--with-tools')

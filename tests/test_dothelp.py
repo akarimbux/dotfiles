@@ -72,7 +72,29 @@ Update instructions.
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('Use venv.', result.stdout)
         self.assertNotIn('Update instructions.', result.stdout)
-        self.assertEqual(list(self.root.glob('dothelp.*.md')), [])
+        self.assertEqual(list(self.root.glob('dothelp.*')), [])
+
+    def test_topic_works_with_bsd_style_mktemp(self):
+        (self.bin / 'mktemp').unlink()
+        self.mock('mktemp', '''
+case "$1" in
+  *XXXXXX) exec /usr/bin/mktemp "$@" ;;
+  *) printf 'mktemp: template must end in XXXXXX\\n' >&2; exit 1 ;;
+esac
+''')
+        result = self.run_help('python')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Use venv.', result.stdout)
+        self.assertEqual(list(self.root.glob('dothelp.*')), [])
+
+    def test_renderer_failure_cleans_temporary_topic(self):
+        self.mock('glow', 'exit 42')
+        self.assertEqual(self.run_help('python', terminal=True).returncode, 42)
+        self.assertEqual(list(self.root.glob('dothelp.*')), [])
+
+    def test_fzf_failure_is_reported(self):
+        self.mock('fzf', 'cat >/dev/null; exit 42')
+        self.assertEqual(self.run_help(terminal=True).returncode, 42)
 
     def test_redirected_default_is_full_guide_even_with_glow(self):
         self.mock('glow', 'exit 99')
