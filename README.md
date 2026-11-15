@@ -6,6 +6,15 @@ quick directory jumps, readable file listings, and a Git prompt.
 Zsh is the shell that reads your commands. This repository holds its settings
 and an installer to help you get set up on another computer.
 
+For the full setup reference, run `dothelp` in a new Zsh terminal or read
+[dotfiles(7)](dotfiles.7). You can also open it locally:
+
+```sh
+man -l ./dotfiles.7
+```
+
+On macOS, use `man ./dotfiles.7`.
+
 ## Get started
 
 You'll need Git and Bash. On macOS, install [Homebrew](https://brew.sh) first

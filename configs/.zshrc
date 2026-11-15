@@ -3,6 +3,24 @@ typeset -U path
 path=("$HOME/bin" "$HOME/.local/bin" $path)
 export PATH
 
+# Find the manual beside this sourced config, following the installed symlink.
+typeset -g DOTFILES_MANUAL="${${(%):-%x}:A:h:h}/dotfiles.7"
+dothelp() {
+  if [[ ! -r $DOTFILES_MANUAL ]]; then
+    print -u2 -- "Setup manual not found: $DOTFILES_MANUAL"
+    return 1
+  fi
+  if (( ! $+commands[man] )); then
+    print -u2 'man is missing. Install a manual viewer for your operating system.'
+    return 1
+  fi
+  if [[ $OSTYPE == darwin* ]]; then
+    command man "$DOTFILES_MANUAL"
+  else
+    command man -l "$DOTFILES_MANUAL"
+  fi
+}
+
 # Enable extended globbing and better autocompletion
 setopt EXTENDED_GLOB
 autoload -Uz compinit && compinit
