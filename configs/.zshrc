@@ -16,7 +16,7 @@ dothelp() {
 
 # Enable extended globbing and better autocompletion
 setopt EXTENDED_GLOB
-autoload -Uz compinit && compinit
+autoload -Uz compinit && compinit -i
 
 # uv and uvx autocomplete
 if (( $+commands[uv] )); then
@@ -155,7 +155,7 @@ done
 unset _local_config
 
 # Optional fuzzy search: Ctrl-R history, Ctrl-T files, Alt-C directories
-if (( $+commands[fzf] )); then
+if (( $+commands[fzf] )) && [[ -t 0 ]]; then
   if _fzf_init=$(fzf --zsh 2>/dev/null); then
     eval "$_fzf_init"
   else

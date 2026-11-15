@@ -6,7 +6,7 @@ usage() {
 Usage: bash install.sh [--with-tools] [--dry-run]
 
 Link configs/.zshrc into ${ZDOTDIR:-$HOME}, backing up any existing file.
-  --with-tools  Install zsh, git, eza, jq, fzf, zoxide, uv and two Zsh plugins.
+  --with-tools  Install zsh, git, eza, jq, fzf, glow, zoxide, uv and two Zsh plugins.
                 Uses Homebrew (macOS), or apt plus uv's installer (Linux).
   --dry-run     Print planned changes without writing files or installing tools.
   -h, --help    Show this help.
@@ -31,10 +31,12 @@ source_file="$repo_dir/configs/.zshrc"
 target_dir=${ZDOTDIR:-$HOME}
 target_file="$target_dir/.zshrc"
 
-if [[ ! -f "$source_file" ]]; then
-  printf 'Missing %s. Run the installer from a complete repository checkout.\n' "$source_file" >&2
-  exit 1
-fi
+for required_file in "$source_file" "$repo_dir/configs/dothelp.sh" "$repo_dir/README.md"; do
+  if [[ ! -f $required_file || ! -r $required_file ]]; then
+    printf 'Missing or unreadable %s. Run the installer from a complete repository checkout.\n' "$required_file" >&2
+    exit 1
+  fi
+done
 if [[ -d $target_dir && "$(cd -- "$target_dir" && pwd -P)" == "$repo_dir/configs" ]]; then
   printf 'Refusing to replace the source config in %s.\n' "$target_dir" >&2
   exit 1
@@ -63,7 +65,7 @@ install_tools() {
         printf 'Install Homebrew first: https://brew.sh\n' >&2
         return 1
       fi
-      run brew install zsh git eza jq fzf zoxide zsh-autosuggestions zsh-syntax-highlighting uv
+      run brew install zsh git eza jq fzf glow zoxide zsh-autosuggestions zsh-syntax-highlighting uv
       ;;
     Linux)
       if ! command -v apt-get >/dev/null 2>&1; then
@@ -75,7 +77,7 @@ install_tools() {
         return 1
       fi
       apt_run update
-      for package in zsh git eza jq fzf zoxide zsh-autosuggestions zsh-syntax-highlighting curl ca-certificates; do
+      for package in zsh git eza jq fzf glow zoxide zsh-autosuggestions zsh-syntax-highlighting curl ca-certificates; do
         if $dry_run || apt-cache show "$package" >/dev/null 2>&1; then
           packages+=("$package")
         else
@@ -151,6 +153,7 @@ if $dry_run; then
 else
   printf 'Installed. Keep this checkout in place; git pull updates the linked config.\n'
   printf 'Open a new Zsh terminal, or run: exec zsh\n'
+  printf 'Then run dothelp for your terminal guide.\n'
   if ! command -v zsh >/dev/null 2>&1; then
     printf 'Zsh is not installed yet. Re-run with --with-tools or install it manually.\n'
   fi

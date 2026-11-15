@@ -33,7 +33,7 @@ if [[ -n $query && $query != --all ]]; then
     printf 'Choose a more specific topic:\n%s\n' "$topics" >&2
     exit 2
   fi
-  page=$(mktemp "${TMPDIR:-/tmp}/dothelp.XXXXXXXX.md")
+  page=$(mktemp "${TMPDIR:-/tmp}/dothelp.XXXXXXXX")
   trap 'rm -f -- "$page"' EXIT
   awk -v heading="$topic" '
     /^```/ { fence = !fence }

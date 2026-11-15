@@ -179,10 +179,10 @@ Open a new terminal. Installed tools stay installed.
 
 ## Under the hood
 
-`--with-tools` installs Zsh, Git, eza, jq, fzf, zoxide, uv, autosuggestions,
+`--with-tools` installs Zsh, Git, eza, jq, fzf, Glow, zoxide, uv, autosuggestions,
 and syntax highlighting. Homebrew handles macOS; apt handles Debian/Ubuntu
 and also requests curl and CA certificates. Unavailable apt packages are
-skipped; sudo is used when needed. On other platforms, install tools yourself
+skipped (including Glow if unavailable); sudo is used when needed. On other platforms, install tools yourself
 and run the config-only installer.
 
 Linux installs uv using its [official installer](https://docs.astral.sh/uv/getting-started/installation/),

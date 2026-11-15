@@ -2,6 +2,8 @@
 import os
 from pathlib import Path
 import pty
+import select
+import time
 import shutil
 import subprocess
 import tempfile
@@ -46,22 +48,28 @@ Update instructions.
                                   timeout=5)
         master, slave = pty.openpty()
         try:
-            result = subprocess.run(cmd, stdin=slave, stdout=slave,
-                                    stderr=subprocess.PIPE, env=self.env,
-                                    text=True, timeout=5)
-            os.close(slave)
-            slave = None
+            process = subprocess.Popen(cmd, stdin=slave, stdout=slave,
+                                       stderr=subprocess.PIPE, env=self.env, text=True)
             chunks = []
-            while True:
-                try:
+            deadline = time.monotonic() + 5
+            # Keep the slave open until output is drained; macOS discards unread
+            # PTY output when the last slave descriptor closes.
+            while time.monotonic() < deadline:
+                readable, _, _ = select.select([master], [], [], 0.1)
+                if readable:
                     chunk = os.read(master, 4096)
-                except OSError:
+                    if not chunk:
+                        break
+                    chunks.append(chunk)
+                elif process.poll() is not None:
                     break
-                if not chunk:
-                    break
-                chunks.append(chunk)
-            result.stdout = b''.join(chunks).decode()
-            return result
+            else:
+                process.kill()
+                process.communicate()
+                self.fail('Terminal help timed out')
+            _, stderr = process.communicate(timeout=1)
+            return subprocess.CompletedProcess(cmd, process.returncode,
+                                               b''.join(chunks).decode(), stderr)
         finally:
             os.close(master)
             if slave is not None:
@@ -72,7 +80,29 @@ Update instructions.
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('Use venv.', result.stdout)
         self.assertNotIn('Update instructions.', result.stdout)
-        self.assertEqual(list(self.root.glob('dothelp.*.md')), [])
+        self.assertEqual(list(self.root.glob('dothelp.*')), [])
+
+    def test_topic_works_with_bsd_style_mktemp(self):
+        (self.bin / 'mktemp').unlink()
+        self.mock('mktemp', '''
+case "$1" in
+  *XXXXXX) exec /usr/bin/mktemp "$@" ;;
+  *) printf 'mktemp: template must end in XXXXXX\\n' >&2; exit 1 ;;
+esac
+''')
+        result = self.run_help('python')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Use venv.', result.stdout)
+        self.assertEqual(list(self.root.glob('dothelp.*')), [])
+
+    def test_renderer_failure_cleans_temporary_topic(self):
+        self.mock('glow', 'exit 42')
+        self.assertEqual(self.run_help('python', terminal=True).returncode, 42)
+        self.assertEqual(list(self.root.glob('dothelp.*')), [])
+
+    def test_fzf_failure_is_reported(self):
+        self.mock('fzf', 'cat >/dev/null; exit 42')
+        self.assertEqual(self.run_help(terminal=True).returncode, 42)
 
     def test_redirected_default_is_full_guide_even_with_glow(self):
         self.mock('glow', 'exit 99')

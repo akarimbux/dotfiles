@@ -20,6 +20,7 @@ class InstallTests(unittest.TestCase):
         self.repo = self.root / "checkout with spaces"
         self.repo.mkdir()
         shutil.copy2(ROOT / 'install.sh', self.repo / 'install.sh')
+        shutil.copy2(ROOT / 'README.md', self.repo / 'README.md')
         shutil.copytree(ROOT / 'configs', self.repo / 'configs')
         self.target = self.root / "shell config"
         self.target.mkdir()
@@ -68,7 +69,7 @@ INSTALLER
 
     def test_fresh_install_and_rerun(self):
         self.run_install()
-        self.assertEqual(self.link.readlink(), self.source)
+        self.assertEqual(self.link.resolve(), self.source.resolve())
         self.run_install()
         self.assertEqual(self.backups(), [])
 
@@ -92,7 +93,7 @@ INSTALLER
         self.assertEqual(len(self.backups()), 1)
         self.assertEqual((self.backups()[0] / ".zshrc").read_text(), "original config\n")
         self.assertEqual(local.read_text(), "local settings\n")
-        self.assertEqual(self.link.readlink(), self.source)
+        self.assertEqual(self.link.resolve(), self.source.resolve())
 
     def test_dangling_symlink_is_preserved(self):
         self.link.symlink_to("missing-old-config")
@@ -125,11 +126,90 @@ INSTALLER
         self.run_install(success=False)
         self.assertFalse(self.link.exists())
 
+    def test_missing_help_files_leave_existing_config_untouched(self):
+        self.link.write_text('original')
+        for file in (self.repo / 'README.md', self.repo / 'configs/dothelp.sh'):
+            with self.subTest(file=file):
+                contents = file.read_text()
+                file.unlink()
+                result = self.run_install('--with-tools', success=False)
+                self.assertIn(str(file), result.stderr)
+                self.assertEqual(self.link.read_text(), 'original')
+                self.assertEqual(self.backups(), [])
+                self.assertFalse(self.log.exists())
+                file.write_text(contents)
+
+    @unittest.skipUnless(shutil.which('zsh'), 'Requires Zsh')
+    def test_fresh_install_opens_readme_from_another_directory(self):
+        self.run_install()
+        result = subprocess.run(
+            [shutil.which('zsh'), '-f', '-c', 'source "$ZDOTDIR/.zshrc"; dothelp python'],
+            cwd=self.root, env=self.env, text=True, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('## Python without the fuss', result.stdout)
+        self.assertNotIn('## Make it yours', result.stdout)
+
+    @unittest.skipUnless(shutil.which('zsh'), 'Requires Zsh')
+    def test_new_shell_reads_guide_updates_without_reinstalling(self):
+        self.run_install()
+        guide = self.repo / 'README.md'
+        guide.write_text(guide.read_text().replace(
+            '## Python without the fuss', '## Python without the fuss\n\nUpdated guide marker.'))
+        result = subprocess.run(
+            [shutil.which('zsh'), '-ic', 'dothelp python'],
+            cwd=self.root, env=self.env, text=True, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Updated guide marker.', result.stdout)
+        self.assertIn('## Python without the fuss', result.stdout)
+        self.assertNotIn('## Make it yours', result.stdout)
+
+    @unittest.skipUnless(shutil.which('zsh'), 'Requires Zsh')
+    def test_documented_restore_recovers_previous_shell(self):
+        self.link.write_text('export RESTORED_CONFIG=yes\n')
+        self.run_install()
+        backup = self.backups()[0] / '.zshrc'
+        subprocess.run(['mv', '-i', str(self.link), str(self.target / '.zshrc.dotfiles-link')],
+                       check=True, capture_output=True)
+        subprocess.run(['mv', '-i', str(backup), str(self.link)],
+                       check=True, capture_output=True)
+        result = subprocess.run(
+            [shutil.which('zsh'), '-ic', 'print -r -- "$RESTORED_CONFIG"'],
+            cwd=self.root, env=self.env, text=True, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), 'yes')
+        self.assertFalse(self.link.is_symlink())
+
+    @unittest.skipUnless(shutil.which('zsh'), 'Requires Zsh')
+    def test_older_fzf_shell_integration_loads_after_install(self):
+        self.mock('fzf', 'exit 1\n')
+        shell_dir = self.root / '.fzf/shell'
+        shell_dir.mkdir(parents=True)
+        (shell_dir / 'key-bindings.zsh').write_text('export FZF_FALLBACK_LOADED=yes\n')
+        self.run_install()
+        master, slave = os.openpty()
+        try:
+            result = subprocess.run(
+                [shutil.which('zsh'), '-ic', 'dothelp shortcuts; print -r -- "$FZF_FALLBACK_LOADED"'],
+                stdin=slave, cwd=self.root, env=self.env, text=True, capture_output=True, timeout=10)
+        finally:
+            os.close(slave)
+            os.close(master)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('## At your fingertips', result.stdout)
+        self.assertTrue(result.stdout.rstrip().endswith('yes'))
+
+    def test_unavailable_glow_is_optional(self):
+        self.mock('apt-cache', '[ "$2" != glow ]\n')
+        result = self.run_install('--with-tools')
+        self.assertIn('Skipping unavailable package: glow', result.stderr)
+        self.assertNotIn(' glow ', self.log.read_text())
+        self.assertTrue(self.link.is_symlink())
+
     def test_apt_skips_unavailable_package(self):
         result = self.run_install("--with-tools")
         commands = self.log.read_text()
         self.assertIn("apt-get update", commands)
-        self.assertIn("apt-get install -y zsh git jq fzf zoxide", commands)
+        self.assertIn("apt-get install -y zsh git jq fzf glow zoxide", commands)
         self.assertNotIn(" eza", commands)
         self.assertIn("Skipping unavailable package: eza", result.stderr)
 
@@ -137,7 +217,7 @@ INSTALLER
         self.mock("uname", "printf 'Darwin\\n'\n")
         self.mock("brew", 'printf "brew %s\\n" "$*" >> "$TEST_LOG"\n')
         self.run_install("--with-tools")
-        self.assertIn("brew install zsh git eza jq fzf zoxide", self.log.read_text())
+        self.assertIn("brew install zsh git eza jq fzf glow zoxide", self.log.read_text())
         self.assertIn("zsh-syntax-highlighting uv", self.log.read_text())
 
     def test_uv_installed_without_editing_shell_files(self):
