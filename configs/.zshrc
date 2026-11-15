@@ -4,7 +4,7 @@ path=("$HOME/bin" "$HOME/.local/bin" $path)
 export PATH
 
 # Find the guide beside this sourced config, following the installed symlink.
-typeset -g DOTFILES_MANUAL="${${(%):-%x}:A:h:h}/REFERENCE.md"
+typeset -g DOTFILES_MANUAL="${${(%):-%x}:A:h:h}/README.md"
 typeset -g DOTFILES_HELPER="${${(%):-%x}:A:h}/dothelp.sh"
 dothelp() {
   if [[ ! -r $DOTFILES_HELPER ]]; then

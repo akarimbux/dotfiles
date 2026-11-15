@@ -5,7 +5,7 @@ if [[ ${1:-} == --help || ${1:-} == -h ]]; then
   printf 'Usage: dothelp [topic | --all]\n'
   exit 0
 fi
-guide=${DOTFILES_MANUAL:-"$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)/REFERENCE.md"}
+guide=${DOTFILES_MANUAL:-"$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)/README.md"}
 if [[ ! -r $guide ]]; then
   printf 'Setup guide not found: %s\n' "$guide" >&2
   exit 1
