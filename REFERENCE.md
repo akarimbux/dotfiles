@@ -1,34 +1,22 @@
-# Terminal setup reference
+<div align="center">
 
-Run `dothelp` in Zsh to open the terminal version of this reference.
+# Your terminal, upgraded.
 
-## Name
+A field guide to your Zsh setup.
 
-dotfiles - personal Zsh terminal setup and installer
+**Search faster. Jump between projects. Keep Python tidy.**
 
-## Synopsis
+[Get started](#get-started) · [Shortcuts](#at-your-fingertips) · [Python](#python-without-the-fuss) · [Customize](#make-it-yours) · [Recovery](#a-way-back)
 
-```sh
-bash install.sh [--with-tools] [--dry-run]
-bash install.sh --help
+</div>
 
-venv [python-version]
-dothelp
-```
+---
 
-## Description
+> **Need this in your terminal?** Run `dothelp` from any directory.
 
-This setup provides shared command history, completion, searchable history,
-directory navigation, optional command suggestions and syntax highlighting,
-and a prompt showing Python environment and Git information.
+## Get started
 
-The installer links the checkout's configs/.zshrc to
-${ZDOTDIR:-$HOME}/.zshrc. Keep the checkout in place: moving or deleting it
-breaks the link. The installer does not change your default shell.
-
-## Installation
-
-Git and Bash are required. For a new installation:
+Git and Bash are required. On macOS, install [Homebrew](https://brew.sh) first.
 
 ```sh
 git clone https://github.com/akarimbux/dotfiles.git "$HOME/.dotfiles"
@@ -37,154 +25,96 @@ bash install.sh --with-tools
 exec zsh
 ```
 
-On macOS, install Homebrew first. Automatic tool installation supports
-Homebrew on macOS and apt on Debian/Ubuntu. For another platform, install
-the tools yourself and run the installer without --with-tools.
+**Already installed?** Get the latest configuration:
 
-### Installer options
+```sh
+git -C "$HOME/.dotfiles" pull --ff-only
+exec zsh
+```
 
-**--with-tools**
+Keep the checkout in place. Your shell configuration links to it.
 
-Install Zsh, Git, eza, jq, fzf, zoxide, uv, zsh-autosuggestions, and
-zsh-syntax-highlighting. Linux also requests curl and ca-certificates,
-skips packages whose metadata is unavailable, and installs uv using its
-official installer. Apt uses sudo when necessary.
+| Installer mode | Command |
+| :--- | :--- |
+| Config + tools | `bash install.sh --with-tools` |
+| Preview changes | `bash install.sh --with-tools --dry-run` |
+| Config only | `bash install.sh` |
+| Installer help | `bash install.sh --help` |
 
-**--dry-run**
+The installer backs up an existing `.zshrc` before linking this setup. It keeps personal settings and leaves your default shell unchanged.
 
-Print planned changes without writing files or installing tools.
-May be combined with --with-tools.
+## At your fingertips
 
-**-h, --help**
+### Find it. Recall it. Run it.
 
-Print installer help and exit.
+| Action | Shortcut | Needs |
+| :--- | :--- | :--- |
+| Search command history | **Ctrl-R** | fzf |
+| Find a file and insert its path | **Ctrl-T** | fzf |
+| Pick a directory and move into it | **Alt-C** | fzf |
+| Search history by the prefix you've typed | **↑ / ↓** | Built in |
+| Accept a suggestion at the end of the line | **→** | Autosuggestions¹ |
+| Start / end of line | **Home / End** | Terminal support |
+| Move by a word | **Ctrl-← / Ctrl-→** | Terminal support |
+| Delete the character under the cursor | **Delete** | Terminal support |
 
-Without --with-tools, only the configuration link is installed.
-Optional integrations activate when their tools are available.
+In a picker: **type** to filter · **↑ ↓** to move · **Enter** to choose · **Ctrl-C** to cancel.
 
-### Backups and repeated installation
+¹ Uses the applicable keymap's forward-character binding. Personal bindings can change this behavior.
 
-An existing .zshrc, including a dangling symbolic link, is moved into a
-new .zshrc.backup.XXXXXXXX directory beside the target. The installer
-prints the backup path. A directory at the target is rejected.
+### Less typing, more moving
 
-An existing link to this checkout is kept. Local settings and alias files
-are not replaced. On Linux, an existing uv on PATH or at the selected
-installation path is kept.
+| Command | What it does |
+| :--- | :--- |
+| `z project-name` | Jump to a directory zoxide has learned |
+| `zi` | Pick a frequent directory interactively; requires zoxide and fzf |
+| `..` | Go up one directory |
+| `./some-directory` | Enter a directory without typing `cd` |
+| `dirs` | Show the directory stack |
+| `popd` | Return through the directory stack |
+| `cls` | Clear the screen |
+| `dothelp` | Open the full terminal manual |
 
-## Daily commands
+### A better look at your files
 
-**dothelp**
+| Command | View |
+| :--- | :--- |
+| `ll` | Standard long listing with readable file sizes |
+| `la` | Standard long listing, including hidden files |
+| `e` | eza listing |
+| `el` | Details, headers, and Git status |
+| `ea` | Details and Git status, including hidden files |
+| `et` | A directory tree, two levels deep |
 
-Open this setup's manual from any directory. Requires the system man viewer.
+The `e` commands appear when eza is installed. Your usual `ls` stays available.
 
-**ll**
+## Know where you stand
 
-List files with ls -lh.
+Your prompt answers three questions: **where am I, which Python is active, and what's happening in Git?**
 
-**la**
+```text
+[py:my-project/.venv] you@laptop ~/projects/my-project/src/api ❯
+                                      my-project/src/api | feature/login ✗
+```
 
-List files, including hidden files, with ls -lha.
+The Git information appears at the right edge of the command line.
 
-**cls**
+| Signal | Meaning |
+| :--- | :--- |
+| `[py:my-project/.venv]` | Active Python environment |
+| `my-project/src/api` | Repository name + your location inside it |
+| `feature/login` | Current branch |
+| `✔` | Clean working tree |
+| `✗` | Changes present, including untracked files |
+| `detached@abc1234` | Detached checkout at a short commit ID |
 
-Clear the terminal screen.
+Outside a repository, the Git label disappears. Without an active environment, the Python label disappears. Virtual environments take precedence over Conda; `.venv` and `venv` labels include their parent folder to distinguish projects.
 
-**..**
+## Python without the fuss
 
-Move to the parent directory.
+### A folder of scripts
 
-**e**
-
-List files with eza, when installed.
-
-**el**
-
-Show an eza long listing with headers and Git status.
-
-**ea**
-
-Like el, including hidden files.
-
-**et**
-
-Show an eza directory tree, two levels deep.
-
-**z directory-name**
-
-Jump to a frequently visited directory using zoxide.
-
-**zi**
-
-Choose a directory interactively using zoxide and fzf.
-
-Typing a directory path by itself changes to it. Directory changes also
-maintain a directory stack; use dirs, pushd, and popd to inspect or use it.
-
-## Keyboard shortcuts
-
-Bindings apply when the relevant integration is available and can be
-affected by terminal settings or personal overrides.
-
-**Ctrl-R**
-
-Search command history with fzf.
-
-**Ctrl-T**
-
-Choose files with fzf and insert their paths into the command line.
-
-**Alt-C**
-
-Choose a directory with fzf and change to it.
-
-**Up / Down**
-
-Search history using the text already typed as a prefix.
-
-**Right arrow**
-
-Accept a history suggestion at the end of the line when autosuggestions
-is loaded and the applicable keymap uses forward-char.
-
-**Home / End**
-
-Move to the beginning or end of the command line.
-
-**Delete**
-
-Delete the character under the cursor.
-
-**Ctrl-Right / Ctrl-Left**
-
-Move forward or backward by a word.
-
-In an fzf picker, type to filter, use Up and Down to move, Enter to select,
-or Ctrl-C to cancel.
-
-## Python environments
-
-**venv**
-
-Create .venv in the current directory using uv if it does not exist,
-then activate it in the current shell. Reuse an existing environment.
-
-**venv python-version**
-
-Create and activate a new .venv with the requested Python version,
-for example venv 3.13. uv may download a suitable Python interpreter.
-If .venv already exists, refuse to replace it; run venv without a version
-to activate it.
-
-**deactivate**
-
-Leave the active virtual environment.
-
-venv requires uv, accepts at most one argument, and refuses to activate
-an existing .venv without a bin/activate file. It does not activate an
-environment merely because you enter a project directory.
-
-### Folder of scripts
+Create an environment once, then activate it whenever you return.
 
 ```sh
 cd your-project
@@ -194,9 +124,25 @@ python your_script.py
 deactivate
 ```
 
-Add .venv/ to the project's .gitignore.
+Next time, just run:
 
-### Projects with tracked dependencies
+```sh
+venv
+```
+
+| Command | Behavior |
+| :--- | :--- |
+| `venv` | Create `.venv` if needed, then activate it |
+| `venv 3.13` | Create a new environment with Python 3.13, then activate it |
+| `deactivate` | Leave the active environment |
+
+> **Your existing environment is kept.** If `.venv` already exists, `venv 3.13` refuses to replace it. Use `venv` to activate it instead. Add `.venv/` to your project's `.gitignore`.
+
+The helper requires uv. Python may be downloaded when requested. Entering a project directory does not automatically activate its environment.
+
+### A project with dependencies
+
+Let uv track the project and run commands in its environment:
 
 ```sh
 uv init my-project
@@ -206,173 +152,112 @@ uv add requests
 uv run python main.py
 ```
 
-For an existing project, uv sync creates or updates its environment from
-project files and the lockfile. uv run does not require manual activation.
-Commit pyproject.toml, uv.lock, and .python-version for reproducibility.
+| Command | Use it to… |
+| :--- | :--- |
+| `uv sync` | Create or update an existing project's environment from its project files and lockfile |
+| `uv run python main.py` | Run with project dependencies, without manual activation |
+| `uv python install 3.13` | Download a Python version |
+| `uv tool install ruff` | Install a standalone Python CLI |
 
-### Other uv commands
+Commit `pyproject.toml`, `uv.lock`, and `.python-version` for reproducible projects. Completion for `uv` and `uvx` loads when available.
 
-```sh
-uv python install 3.13     # Download a Python version
-uv tool install ruff      # Install a standalone Python CLI
-```
+## Make it yours
 
-Completion for uv and uvx is initialized when those commands are available.
+| File | Put this here |
+| :--- | :--- |
+| `~/.zsh_aliases` | Your aliases |
+| `~/.zshrc.local` | Machine-specific paths, settings, and overrides |
 
-## Prompt
-
-The left prompt shows the active Python environment, if any, followed by
-user@host, the current directory, and a command marker.
-
-The right prompt shows the repository directory name, the path within it,
-the branch, and a status symbol. A check mark means clean; a cross means
-uncommitted changes, including untracked files. Outside a repository,
-the Git label disappears. A detached checkout shows detached@ followed
-by its short commit ID.
-
-Virtual environments take precedence over Conda. An environment named
-.venv or venv includes its parent directory name, such as
-[py:my-project/.venv]. Activation and deactivation update the label.
-
-## History
-
-History is shared between terminals and stored in ~/.zsh_history.
-HISTSIZE and SAVEHIST are set to 10000. Older duplicate entries are removed.
-
-## Customization
-
-Put personal aliases in ~/.zsh_aliases and machine-specific settings in
-~/.zshrc.local. These files are sourced in that order after the main
-aliases and prompt definitions, before fzf, zoxide, and optional plugins.
-They can execute ordinary Zsh code.
-
-For example, add this to ~/.zsh_aliases:
+For example, in `~/.zsh_aliases`:
 
 ```sh
 alias projects='cd ~/projects'
 ```
 
-Reload with exec zsh or open a new Zsh terminal.
+Reload with `exec zsh`. Both files are ordinary Zsh scripts. Aliases load first, then local settings, followed by fzf, zoxide, and plugins. Syntax highlighting loads last.
 
-## Environment
+History is shared between terminals, stored in `~/.zsh_history`, and limited to 10,000 saved entries. Older duplicate entries are removed.
 
-**ZDOTDIR**
-
-Select the directory containing .zshrc and its backups. Defaults to HOME.
-Export it before running the installer if needed. Personal aliases and
-local settings are still read from HOME.
-
-**UV_INSTALL_DIR**
-
-Override the Linux uv installation directory. Defaults to ~/.local/bin.
-For a custom directory, also add it to PATH in ~/.zshrc.local; the setup
-automatically adds only ~/bin and ~/.local/bin.
-
-**ZSH_PLUGIN_DIR**
-
-Directory containing the zsh-autosuggestions and zsh-syntax-highlighting
-subdirectories. May be set in ~/.zshrc.local.
-
-**XDG_DATA_HOME**
-
-Changes the default local plugin root to $XDG_DATA_HOME/zsh/plugins.
-Otherwise it is ~/.local/share/zsh/plugins.
-
-**HOMEBREW_PREFIX**
-
-Used to find Homebrew fzf integration and plugins. Standard Apple Silicon,
-Intel Homebrew, and Linux package locations are also searched.
-
-**VIRTUAL_ENV, CONDA_DEFAULT_ENV**
-
-Determine the Python environment label. VIRTUAL_ENV takes precedence.
-
-The setup sets VIRTUAL_ENV_DISABLE_PROMPT=1 and CONDA_CHANGEPS1=false
-to avoid duplicate activation labels, and LESS=-R for colored output.
-
-## Files
-
-**configs/.zshrc**
-
-Tracked configuration inside the checkout.
-
-**${ZDOTDIR:-$HOME}/.zshrc**
-
-Installed symbolic link.
-
-**${ZDOTDIR:-$HOME}/.zshrc.backup.XXXXXXXX/.zshrc**
-
-Previous configuration, when one existed.
-
-**~/.zsh_aliases**
-
-Optional personal aliases.
-
-**~/.zshrc.local**
-
-Optional machine-specific settings.
-
-**~/.zsh_history**
-
-Persistent command history.
-
-**~/.local/bin/uv, ~/.local/bin/uvx**
-
-Default Linux uv executables.
-
-## Updates
+## Keep it fresh
 
 ```sh
 git -C "$HOME/.dotfiles" pull --ff-only
 exec zsh
 ```
 
-Use your actual checkout path if different. The symbolic link picks up
-configuration updates automatically. To install newly added tools:
+If an update adds tools you want, rerun `bash install.sh --with-tools` from the checkout. Use your actual checkout path if different.
 
-```sh
-cd "$HOME/.dotfiles"
-bash install.sh --with-tools
-```
+## A way back
 
-## Restoring the previous configuration
-
-Use the exact backup path printed during installation. For example:
+The installer prints the location of your previous configuration. Use that exact backup path:
 
 ```sh
 mv -i "$HOME/.zshrc" "$HOME/.zshrc.dotfiles-link"
 mv -i "$HOME/.zshrc.backup.A1B2C3D4/.zshrc" "$HOME/.zshrc"
 ```
 
-Replace A1B2C3D4 with the actual suffix. If ZDOTDIR is set, substitute that
-directory for HOME in these two commands. Open a new terminal afterward.
-If no previous config existed, move the link aside without restoring a backup.
-Installed tools remain installed.
+Replace `A1B2C3D4` with your backup's suffix, then open a new terminal. If you use `ZDOTDIR`, substitute that directory for `$HOME` in these commands. With no previous configuration, simply move the link aside. Installed tools stay installed.
 
-## Diagnostics
+---
 
-**uv is missing**
+## Under the hood
 
-Run bash install.sh --with-tools from the checkout, then exec zsh.
-For a custom UV_INSTALL_DIR, ensure that directory is on PATH.
+<details>
+<summary><strong>Platforms & installation behavior</strong></summary>
 
-**Optional commands or shortcuts are missing**
+- **macOS:** Homebrew installs Zsh, Git, eza, jq, fzf, zoxide, uv, and both Zsh plugins.
+- **Debian / Ubuntu:** apt installs available packages, including curl and CA certificates; uv comes from its [official installer](https://docs.astral.sh/uv/getting-started/installation/). sudo is used when needed.
+- **Other platforms:** use config-only installation and install tools yourself. Some platform-specific commands may need adjustment.
 
-Check that the corresponding tools and plugins are installed. A Linux
-package unavailable through apt is skipped. The config remains usable.
+An existing link to this checkout is kept. Other existing `.zshrc` files and links are backed up. A directory at the target is rejected. Linux keeps an existing uv found on PATH or at the selected installation path.
 
-**New terminals open another shell**
+Tool installation failures stop before configuration replacement, but tools installed earlier in the process may remain. Unknown options return status 2; other failures return nonzero.
 
-Choose Zsh in your terminal settings. The installer does not change the
-account's default shell.
+</details>
 
-**Installer exit status**
+<details>
+<summary><strong>Environment variables & file locations</strong></summary>
 
-Zero indicates success or help; unknown options return 2. Other failures
-return a nonzero status. A failed tool installation stops before replacing
-the shell configuration, but may leave tools already installed.
+| Variable | Purpose |
+| :--- | :--- |
+| `ZDOTDIR` | Directory for `.zshrc` and its backups; defaults to `$HOME`. Export before installation. Personal settings still load from `$HOME`. |
+| `UV_INSTALL_DIR` | Linux uv installation directory; defaults to `~/.local/bin`. Add a custom directory to PATH in `.zshrc.local`. |
+| `ZSH_PLUGIN_DIR` | Folder containing both plugin directories; can be set in `.zshrc.local`. |
+| `XDG_DATA_HOME` | Sets the local plugin root to `$XDG_DATA_HOME/zsh/plugins`; otherwise `~/.local/share/zsh/plugins`. |
+| `HOMEBREW_PREFIX` | Helps find Homebrew's fzf integration and plugins. Standard package paths are also searched. |
+| `VIRTUAL_ENV` | Active virtual environment; takes priority in the prompt. |
+| `CONDA_DEFAULT_ENV` | Conda label when no virtual environment is active. |
 
-## Checking the setup
+The setup adds `~/bin` and `~/.local/bin` to PATH, sets `LESS=-R`, and suppresses duplicate Python activation labels with `VIRTUAL_ENV_DISABLE_PROMPT=1` and `CONDA_CHANGEPS1=false`.
+
+| File | Role |
+| :--- | :--- |
+| `configs/.zshrc` | Tracked configuration in this checkout |
+| `${ZDOTDIR:-$HOME}/.zshrc` | Installed link |
+| `${ZDOTDIR:-$HOME}/.zshrc.backup.XXXXXXXX/.zshrc` | Previous configuration |
+| `~/.zsh_history` | Shared history |
+| `~/.local/bin/uv` and `uvx` | Default Linux uv executables |
+
+</details>
+
+<details>
+<summary><strong>Troubleshooting & known limitations</strong></summary>
+
+| Symptom | Check |
+| :--- | :--- |
+| `uv` is missing | Run the installer with `--with-tools`, then `exec zsh`. Check PATH for a custom installation directory. |
+| Shortcuts or integrations are missing | Check the corresponding tools and plugins are installed; unavailable apt packages are skipped. |
+| A new terminal opens another shell | Choose Zsh in your terminal settings. The installer leaves your default shell unchanged. |
+| `dothelp` cannot open the manual | Install your operating system's `man` viewer and keep the checkout in place. |
+
+**Known installer limitation:** do not set `ZDOTDIR` to this checkout's `configs` directory. The current installer can replace its own source with a self-referencing link.
+
+**Known test limitation:** shell tests inherit HOME and can execute personal `.zsh_aliases` and `.zshrc.local` files. Use an isolated HOME to prevent interference.
+
+</details>
+
+<details>
+<summary><strong>Validation & further reading</strong></summary>
 
 From the checkout:
 
@@ -382,23 +267,20 @@ zsh -n configs/.zshrc
 python3 -m unittest discover -s tests
 ```
 
-Package managers and uv creation are mocked in the automated tests.
-Prompt tests use real temporary Git repositories. Shell tests require Zsh;
-they are skipped when it is absent.
+Automated tests mock package managers and uv environment creation. Prompt tests use real temporary Git repositories. Shell tests are skipped when Zsh is absent.
 
-## Known limitations
+Explore the tools: [uv](https://docs.astral.sh/uv/) · [fzf](https://github.com/junegunn/fzf) · [zoxide](https://github.com/ajeetdsouza/zoxide) · [eza](https://github.com/eza-community/eza)
 
-Do not point ZDOTDIR at the checkout's configs directory: the current
-installer can replace its source file with a self-referencing link.
+For command-level details, use `man zsh`, `man git`, or the installed tool's help.
 
-Shell tests currently inherit HOME and can execute your personal
-~/.zsh_aliases and ~/.zshrc.local. Run them with an isolated HOME when
-personal startup code could interfere.
+</details>
 
-## See also
+---
 
-zsh(1), zshbuiltins(1), git(1), fzf(1), zoxide(1), eza(1), jq(1)
+<div align="center">
 
-Repository: https://github.com/akarimbux/dotfiles
+**One command away: `dothelp`**
 
-uv documentation: https://docs.astral.sh/uv/
+[Back to top](#your-terminal-upgraded)
+
+</div>
