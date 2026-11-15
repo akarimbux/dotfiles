@@ -3,21 +3,19 @@ typeset -U path
 path=("$HOME/bin" "$HOME/.local/bin" $path)
 export PATH
 
-# Find the manual beside this sourced config, following the installed symlink.
-typeset -g DOTFILES_MANUAL="${${(%):-%x}:A:h:h}/dotfiles.7"
+# Find the guide beside this sourced config, following the installed symlink.
+typeset -g DOTFILES_MANUAL="${${(%):-%x}:A:h:h}/REFERENCE.md"
 dothelp() {
   if [[ ! -r $DOTFILES_MANUAL ]]; then
-    print -u2 -- "Setup manual not found: $DOTFILES_MANUAL"
+    print -u2 -- "Setup guide not found: $DOTFILES_MANUAL"
     return 1
   fi
-  if (( ! $+commands[man] )); then
-    print -u2 'man is missing. Install a manual viewer for your operating system.'
-    return 1
-  fi
-  if [[ $OSTYPE == darwin* ]]; then
-    command man "$DOTFILES_MANUAL"
+  if (( $+commands[glow] )); then
+    command glow -p "$DOTFILES_MANUAL"
+  elif [[ -t 1 ]] && (( $+commands[less] )); then
+    command less "$DOTFILES_MANUAL"
   else
-    command man -l "$DOTFILES_MANUAL"
+    command cat "$DOTFILES_MANUAL"
   fi
 }
 
