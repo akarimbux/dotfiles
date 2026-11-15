@@ -20,6 +20,7 @@ class InstallTests(unittest.TestCase):
         self.repo = self.root / "checkout with spaces"
         self.repo.mkdir()
         shutil.copy2(ROOT / 'install.sh', self.repo / 'install.sh')
+        shutil.copy2(ROOT / 'README.md', self.repo / 'README.md')
         shutil.copytree(ROOT / 'configs', self.repo / 'configs')
         self.target = self.root / "shell config"
         self.target.mkdir()
@@ -125,11 +126,41 @@ INSTALLER
         self.run_install(success=False)
         self.assertFalse(self.link.exists())
 
+    def test_missing_help_files_leave_existing_config_untouched(self):
+        self.link.write_text('original')
+        for file in (self.repo / 'README.md', self.repo / 'configs/dothelp.sh'):
+            with self.subTest(file=file):
+                contents = file.read_text()
+                file.unlink()
+                result = self.run_install('--with-tools', success=False)
+                self.assertIn(str(file), result.stderr)
+                self.assertEqual(self.link.read_text(), 'original')
+                self.assertEqual(self.backups(), [])
+                self.assertFalse(self.log.exists())
+                file.write_text(contents)
+
+    @unittest.skipUnless(shutil.which('zsh'), 'Requires Zsh')
+    def test_fresh_install_opens_readme_from_another_directory(self):
+        self.run_install()
+        result = subprocess.run(
+            [shutil.which('zsh'), '-f', '-c', 'source "$ZDOTDIR/.zshrc"; dothelp python'],
+            cwd=self.root, env=self.env, text=True, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('## Python without the fuss', result.stdout)
+        self.assertNotIn('## Make it yours', result.stdout)
+
+    def test_unavailable_glow_is_optional(self):
+        self.mock('apt-cache', '[ "$2" != glow ]\n')
+        result = self.run_install('--with-tools')
+        self.assertIn('Skipping unavailable package: glow', result.stderr)
+        self.assertNotIn(' glow ', self.log.read_text())
+        self.assertTrue(self.link.is_symlink())
+
     def test_apt_skips_unavailable_package(self):
         result = self.run_install("--with-tools")
         commands = self.log.read_text()
         self.assertIn("apt-get update", commands)
-        self.assertIn("apt-get install -y zsh git jq fzf zoxide", commands)
+        self.assertIn("apt-get install -y zsh git jq fzf glow zoxide", commands)
         self.assertNotIn(" eza", commands)
         self.assertIn("Skipping unavailable package: eza", result.stderr)
 
@@ -137,7 +168,7 @@ INSTALLER
         self.mock("uname", "printf 'Darwin\\n'\n")
         self.mock("brew", 'printf "brew %s\\n" "$*" >> "$TEST_LOG"\n')
         self.run_install("--with-tools")
-        self.assertIn("brew install zsh git eza jq fzf zoxide", self.log.read_text())
+        self.assertIn("brew install zsh git eza jq fzf glow zoxide", self.log.read_text())
         self.assertIn("zsh-syntax-highlighting uv", self.log.read_text())
 
     def test_uv_installed_without_editing_shell_files(self):
