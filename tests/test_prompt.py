@@ -21,7 +21,7 @@ class PromptTests(unittest.TestCase):
         self.repo.mkdir()
         (self.repo / 'src' / 'package').mkdir(parents=True)
         self.git('init', '-q', '-b', 'main')
-        self.env = dict(os.environ, ZDOTDIR=str(self.root),
+        self.env = dict(os.environ, HOME=str(self.root), ZDOTDIR=str(self.root),
                         TEST_CONFIG=str(ROOT / 'configs/.zshrc'),
                         PATH='/usr/bin:/bin')
         for name in ['VIRTUAL_ENV', 'CONDA_DEFAULT_ENV']:

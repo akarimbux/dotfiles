@@ -18,7 +18,9 @@ class InstallTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.repo = self.root / "checkout with spaces"
-        shutil.copytree(ROOT, self.repo, ignore=shutil.ignore_patterns("__pycache__"))
+        self.repo.mkdir()
+        shutil.copy2(ROOT / 'install.sh', self.repo / 'install.sh')
+        shutil.copytree(ROOT / 'configs', self.repo / 'configs')
         self.target = self.root / "shell config"
         self.target.mkdir()
         self.link = self.target / ".zshrc"
@@ -26,9 +28,9 @@ class InstallTests(unittest.TestCase):
         self.bin = self.root / "bin"
         self.bin.mkdir()
         self.log = self.root / "commands.log"
-        self.env = dict(os.environ, ZDOTDIR=str(self.target),
+        self.env = dict(os.environ, HOME=str(self.root), ZDOTDIR=str(self.target),
                         PATH=str(self.bin) + os.pathsep + '/usr/bin:/bin',
-                        UV_INSTALL_DIR=str(self.root / 'uv bin'),
+                        UV_INSTALL_DIR=str(self.root / 'uv bin'), TMPDIR=str(self.root),
                         TEST_LOG=str(self.log))
         self.mock("uname", "printf 'Linux\\n'\n")
         self.mock("apt-get", 'printf "apt-get %s\\n" "$*" >> "$TEST_LOG"\n')
@@ -69,6 +71,18 @@ INSTALLER
         self.assertEqual(self.link.readlink(), self.source)
         self.run_install()
         self.assertEqual(self.backups(), [])
+
+    def test_install_into_source_directory_keeps_source(self):
+        original = self.source.read_text()
+        alias = self.root / 'source alias'
+        alias.symlink_to(self.repo / 'configs', target_is_directory=True)
+        for target in (self.repo / 'configs', alias):
+            with self.subTest(target=target):
+                self.env['ZDOTDIR'] = str(target)
+                self.run_install('--with-tools', success=False)
+                self.assertFalse(self.source.is_symlink())
+                self.assertEqual(self.source.read_text(), original)
+                self.assertFalse(self.log.exists())
 
     def test_existing_config_is_backed_up_and_local_settings_preserved(self):
         self.link.write_text("original config\n")
@@ -141,6 +155,19 @@ INSTALLER
         self.mock("curl", "exit 1\n")
         self.run_install("--with-tools", success=False)
         self.assertEqual(self.link.read_text(), 'original')
+        self.assertEqual(self.backups(), [])
+        self.assertEqual(list(self.root.glob('dotfiles-uv.*')), [])
+
+    def test_failed_uv_installer_cleans_download_and_preserves_config(self):
+        self.link.write_text('original')
+        self.mock('curl', """
+while [ "$1" != -o ]; do shift; done
+shift
+printf 'exit 1\\n' > "$1"
+""")
+        self.run_install('--with-tools', success=False)
+        self.assertEqual(self.link.read_text(), 'original')
+        self.assertEqual(list(self.root.glob('dotfiles-uv.*')), [])
         self.assertEqual(self.backups(), [])
 
     def test_package_failure_leaves_existing_config_intact(self):
