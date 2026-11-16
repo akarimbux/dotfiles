@@ -90,7 +90,7 @@ to extract names from an `items` list.
 ## Know where you stand
 
 ```text
-[py:my-project/.venv] you@laptop ~/projects/my-project/src/api ❯
+[py:my-project] you@laptop ~/projects/my-project/src/api ❯
                                       my-project/src/api | feature/login ✗
 ```
 
@@ -100,31 +100,17 @@ repository name, path within it, branch, and status.
 
 - `✔`: clean working tree. `✗`: changes, including untracked files.
 - `detached@abc1234`: detached checkout at a short commit ID.
-- Virtual environments take precedence over Conda. `.venv` and `venv` labels
-  include the parent directory to distinguish projects.
+- An active Python environment takes precedence over Conda. Hidden environment
+  directories display their project name.
 
 Outside a repository, the Git label disappears. Activation and deactivation
 update the Python label; entering a directory does not activate an environment.
 
 ## Python without the fuss
 
-For a folder of scripts:
+### Projects
 
-```sh
-cd your-project
-venv 3.13
-uv pip install requests
-python your_script.py
-deactivate
-```
-
-`venv` requires uv, accepts at most one version argument, and creates `.venv`
-only if absent. Next time, run `venv` to activate it. An existing environment
-is never replaced: specifying a version then fails, as does an existing
-`.venv` without `bin/activate`. Add `.venv/` to your project's `.gitignore`.
-Python may be downloaded when requested.
-
-For projects with tracked dependencies:
+Let uv manage Python, dependencies, and the project environment:
 
 ```sh
 uv init my-project
@@ -134,15 +120,33 @@ uv add requests
 uv run python main.py
 ```
 
-| Command | Purpose |
-| :--- | :--- |
-| `uv sync` | Update an existing project's environment from project files and lockfile |
-| `uv run python main.py` | Run with project dependencies without manual activation |
-| `uv python install 3.13` | Download a Python version |
-| `uv tool install ruff` | Install a standalone Python CLI |
+`uv run` prepares the environment and runs your command. Use `uv add` and
+`uv remove` to keep dependencies in the project files. For an existing
+project, run `uv sync` after cloning, then use `uv run` as usual.
 
 Commit `pyproject.toml`, `uv.lock`, and `.python-version` for reproducibility.
-Completion for uv and uvx loads when available.
+Python may be downloaded when requested. No activation commands are needed.
+
+### Scripts and tools
+
+Run a script with its dependencies, or try a tool directly:
+
+```sh
+uv run --with requests your_script.py
+uvx ruff check .
+```
+
+| Command | Purpose |
+| :--- | :--- |
+| `uv add requests` | Add a project dependency |
+| `uv remove requests` | Remove a project dependency |
+| `uv run python main.py` | Run with project dependencies |
+| `uv sync --locked` | Reproduce the committed lockfile without changing it |
+| `uv python install 3.13` | Download a Python version |
+| `uv tool install ruff` | Keep a standalone Python CLI installed |
+
+Completion for uv and uvx loads when available. The custom `venv` command
+has been removed; use the uv commands above.
 
 ## Make it yours
 
@@ -225,15 +229,17 @@ For command details, use `man zsh`, `man git`, or the tool's own help.
 
 ## Check
 
-From the checkout:
+From your checkout:
 
 ```sh
-bash -n install.sh
-bash -n configs/dothelp.sh
-zsh -n configs/.zshrc
-python3 -m unittest discover -s tests
+./check.sh
 ```
 
-Tests isolate HOME, mock package managers and uv creation, and use real
-temporary Git repositories. Shell tests require Zsh and are skipped when
-it is absent.
+Requires Bash, Zsh, Git, uv, and an installed Python interpreter. It checks
+shell syntax, runs the focused tests through uv, installs into a temporary
+home, opens help in a fresh shell, checks available Glow/fzf, and runs a real
+uv project and locked sync. It also checks repeated installation.
+
+The checker uses temporary files and leaves your shell configuration alone.
+It does not install packages or download Python. CI installs the real tools
+on Linux and macOS before running the same checker.

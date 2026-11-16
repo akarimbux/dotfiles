@@ -26,33 +26,6 @@ if (( $+commands[uvx] )); then
   eval "$(uvx --generate-shell-completion zsh)"
 fi
 
-# Python environments: venv [python-version] creates once, then activates.
-venv() {
-  if (( $# > 1 )); then
-    print -u2 'Usage: venv [python-version]'
-    return 2
-  fi
-  if ! (( $+commands[uv] )); then
-    print -u2 'uv is missing. Run bash install.sh --with-tools from your dotfiles folder.'
-    return 1
-  fi
-  if [[ ! -e .venv && ! -L .venv ]]; then
-    if (( $# )); then
-      uv venv --python "$1" .venv || return
-    else
-      uv venv .venv || return
-    fi
-  elif (( $# )); then
-    print -u2 'A .venv already exists. Run venv without a version to activate it.'
-    return 1
-  fi
-  if [[ ! -f .venv/bin/activate ]]; then
-    print -u2 'Existing .venv has no activation script; leaving it unchanged.'
-    return 1
-  fi
-  source .venv/bin/activate
-}
-
 # History settings
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
@@ -85,9 +58,8 @@ python_env_prompt() {
   if [[ -n ${VIRTUAL_ENV:-} ]]; then
     env_path=${VIRTUAL_ENV%/}
     env_name=${env_path:t}
-    if [[ $env_name == .venv || $env_name == venv ]]; then
-      env_name="${env_path:h:t}/$env_name"
-    fi
+    # Show the project name for uv's hidden environment directory.
+    [[ $env_name != .* ]] || env_name=${env_path:h:t}
   elif [[ -n ${CONDA_DEFAULT_ENV:-} ]]; then
     env_name=$CONDA_DEFAULT_ENV
   else

@@ -42,13 +42,13 @@ class PromptTests(unittest.TestCase):
         output = self.shell('''
 CONDA_DEFAULT_ENV=science
 python_env_prompt
-VIRTUAL_ENV=/projects/demo%name/.venv
+VIRTUAL_ENV=/projects/demo%name/.python
 python_env_prompt
 unset VIRTUAL_ENV CONDA_DEFAULT_ENV
 python_env_prompt
 ''')
         self.assertEqual(output.splitlines(), [
-            '%F{magenta}[py:science]%f ', '%F{magenta}[py:demo%%name/.venv]%f'])
+            '%F{magenta}[py:science]%f ', '%F{magenta}[py:demo%%name]%f'])
 
     def test_git_location_branch_and_changes(self):
         self.git('checkout', '-qb', 'feature%test')
