@@ -1,20 +1,20 @@
 # Your terminal, upgraded.
 
-A field guide to your Zsh setup.
+**Search faster. Move easily. Keep Python tidy.**
 
-[Shortcuts](#at-your-fingertips) · [Prompt](#know-where-you-stand) ·
-[Python](#python-without-the-fuss) · [Customize](#make-it-yours) ·
-[Recovery](#a-way-back)
+Your Zsh setup, with a field guide one command away.
+
+[Shortcuts](#at-your-fingertips) · [Prompt](#know-where-you-stand) · [Python](#python-without-the-fuss) · [Customize](#make-it-yours) · [Recovery](#a-way-back)
 
 Run `dothelp` from any directory to search these topics with fzf. Without
 fzf, it opens the full guide. Glow adds Markdown styling; otherwise it uses
 `less` or plain text.
 
 ```sh
-dothelp python
-dothelp shortcuts
-dothelp prompt
-dothelp --all
+dothelp python       # Environments and uv
+dothelp shortcuts    # Keys and everyday commands
+dothelp prompt       # Understand the prompt
+dothelp --all        # The complete guide
 ```
 
 You can also type part of a heading: `dothelp fresh`. Esc cancels the menu.
@@ -39,16 +39,20 @@ exec zsh
 | Config only | `bash install.sh` |
 | Help | `bash install.sh --help` |
 
-The installer links `configs/.zshrc` to `${ZDOTDIR:-$HOME}/.zshrc`. Keep
-the checkout in place. Existing files or links, including dangling links,
+The installer links `configs/.zshrc` to `${ZDOTDIR:-$HOME}/.zshrc`.
+Existing files or links, including dangling links,
 are backed up to `.zshrc.backup.XXXXXXXX/.zshrc` beside the target. An
 existing link to this checkout is kept. Directories and targets in the
 checkout's own `configs` directory are rejected.
 
-Personal settings and the default shell are unchanged. If new terminals
-open another shell, select Zsh in your terminal settings.
+> **Keep the checkout in place.** Your shell configuration links to it.
+> Personal settings and the default shell stay as they are.
+
+If new terminals open another shell, select Zsh in your terminal settings.
 
 ## At your fingertips
+
+### Keys
 
 | Action | Shortcut | Needs |
 | :--- | :--- | :--- |
@@ -64,6 +68,8 @@ open another shell, select Zsh in your terminal settings.
 In a picker: type to filter, **↑ ↓** to move, **Enter** to choose,
 **Ctrl-C** to cancel. ¹ Suggestion acceptance uses the applicable keymap's
 forward-character binding; personal bindings can change it.
+
+### Commands
 
 | Command | What it does |
 | :--- | :--- |

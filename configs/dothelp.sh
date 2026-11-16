@@ -18,7 +18,8 @@ esac
 # Read topics from the guide, ignoring headings inside code examples.
 topics=$(awk '/^```/ { fence = !fence } !fence && /^## / { print substr($0, 4) }' "$guide")
 if [[ -z $query && -t 0 && -t 1 ]] && command -v fzf >/dev/null 2>&1; then
-  if query=$(printf '%s\n' "$topics" | fzf --height=70% --layout=reverse --prompt='dothelp › '); then
+  if query=$(printf '%s\n' "$topics" | fzf --height=70% --layout=reverse --border=rounded \
+    --prompt='dothelp › ' --header='Type to search · Enter to open · Esc to close'); then
     :
   else
     result=$?
