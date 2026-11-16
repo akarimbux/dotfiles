@@ -45,4 +45,11 @@ jobs:
           glow -s dark topic.md > rendered.txt
           test -s rendered.txt
           env HOME="$test_home" ZDOTDIR="$test_home" zsh -ic 'command -v uv && command -v fzf && command -v glow'
+          env HOME="$test_home" ZDOTDIR="$test_home" zsh -ic '
+            set -e
+            uv init --bare --no-managed-python "$1"
+            cd "$1"
+            uv run --no-managed-python python -c "print(42)"
+            uv sync --locked --no-managed-python
+          ' audit "$RUNNER_TEMP/uv project"
           env HOME="$test_home" ZDOTDIR="$test_home" bash "$checkout_dir/install.sh"

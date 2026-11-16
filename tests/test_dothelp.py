@@ -13,7 +13,7 @@ class DothelpTests(unittest.TestCase):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
         self.guide = Path(temp.name) / 'guide with spaces.md'
-        self.guide.write_text('## Python\n```sh\n## Example\n```\nvenv\n## Other\nDone.\n')
+        self.guide.write_text('## Python\n```sh\n## Example\n```\nuv run python\n## Other\nDone.\n')
 
     def help(self, *args):
         return subprocess.run(['bash', str(ROOT / 'configs/dothelp.sh'), *args],
@@ -25,7 +25,7 @@ class DothelpTests(unittest.TestCase):
         result = self.help('python')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('## Example', result.stdout)
-        self.assertIn('venv', result.stdout)
+        self.assertIn('uv run python', result.stdout)
         self.assertNotIn('## Other', result.stdout)
         self.assertEqual(list(self.guide.parent.glob('dothelp.*')), [])
 
