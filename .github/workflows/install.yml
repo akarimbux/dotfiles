@@ -33,23 +33,5 @@ jobs:
           cd "$checkout_dir"
           git pull --ff-only
           env HOME="$test_home" ZDOTDIR="$test_home" bash install.sh --with-tools
-          bash -n install.sh
-          bash -n configs/dothelp.sh
-          zsh -n configs/.zshrc
-          env HOME="$test_home" python3 -m unittest discover -s tests
-          cd "$RUNNER_TEMP"
-          env HOME="$test_home" ZDOTDIR="$test_home" zsh -ic 'dothelp python' > topic.md 2> startup.log
-          cat startup.log
-          test ! -s startup.log
-          grep -q '## Python without the fuss' topic.md
-          glow -s dark topic.md > rendered.txt
-          test -s rendered.txt
-          env HOME="$test_home" ZDOTDIR="$test_home" zsh -ic 'command -v uv && command -v fzf && command -v glow'
-          env HOME="$test_home" ZDOTDIR="$test_home" zsh -ic '
-            set -e
-            uv init --bare --no-managed-python "$1"
-            cd "$1"
-            uv run --no-managed-python python -c "print(42)"
-            uv sync --locked --no-managed-python
-          ' audit "$RUNNER_TEMP/uv project"
-          env HOME="$test_home" ZDOTDIR="$test_home" bash "$checkout_dir/install.sh"
+          # Include uv installed into the temporary home on Linux.
+          PATH="$test_home/.local/bin:$PATH" ./check.sh

@@ -229,15 +229,17 @@ For command details, use `man zsh`, `man git`, or the tool's own help.
 
 ## Check
 
-From the checkout:
+From your checkout:
 
 ```sh
-bash -n install.sh
-bash -n configs/dothelp.sh
-zsh -n configs/.zshrc
-python3 -m unittest discover -s tests
+./check.sh
 ```
 
-Tests isolate HOME and use temporary checkouts and Git repositories. CI
-installs real tools and checks a uv project on Linux and macOS. Shell tests
-require Zsh and are skipped when it is absent.
+Requires Bash, Zsh, Git, uv, and an installed Python interpreter. It checks
+shell syntax, runs the focused tests through uv, installs into a temporary
+home, opens help in a fresh shell, checks available Glow/fzf, and runs a real
+uv project and locked sync. It also checks repeated installation.
+
+The checker uses temporary files and leaves your shell configuration alone.
+It does not install packages or download Python. CI installs the real tools
+on Linux and macOS before running the same checker.
