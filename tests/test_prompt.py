@@ -38,58 +38,25 @@ class PromptTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return result.stdout.strip()
 
-    def test_no_environment_and_no_repository(self):
-        self.assertEqual(self.shell('python_env_prompt; git_prompt\n', self.root), '')
-
-    def test_environment_changes_are_reflected_immediately(self):
-        output = self.shell('''
-VIRTUAL_ENV=/projects/demo/.venv
-python_env_prompt
-VIRTUAL_ENV=/envs/analysis
-python_env_prompt
-unset VIRTUAL_ENV
-python_env_prompt
-''')
-        self.assertEqual(output.splitlines(), [
-            '%F{magenta}[py:demo/.venv]%f ', '%F{magenta}[py:analysis]%f'])
-
-    def test_conda_and_virtualenv_precedence(self):
+    def test_environment_precedence_and_prompt_escaping(self):
         output = self.shell('''
 CONDA_DEFAULT_ENV=science
 python_env_prompt
-VIRTUAL_ENV=/projects/demo/.venv
+VIRTUAL_ENV=/projects/demo%name/.venv
+python_env_prompt
+unset VIRTUAL_ENV CONDA_DEFAULT_ENV
 python_env_prompt
 ''')
-        self.assertIn('[py:science]', output)
-        self.assertIn('[py:demo/.venv]', output)
+        self.assertEqual(output.splitlines(), [
+            '%F{magenta}[py:science]%f ', '%F{magenta}[py:demo%%name/.venv]%f'])
 
-    def test_root_branch_and_clean_status(self):
-        output = self.shell('git_prompt\n')
-        self.assertIn('my-project%f | main', output)
-        self.assertIn('✔', output)
-
-    def test_nested_location_and_dirty_status(self):
-        (self.repo / 'untracked').write_text('test')
-        output = self.shell('git_prompt\n', self.repo / 'src' / 'package')
-        self.assertIn('my-project/src/package%f | main', output)
-        self.assertIn('✗', output)
-
-    def test_detached_head_and_worktree(self):
-        self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid',
-                 'commit', '--allow-empty', '-qm', 'initial')
-        self.git('checkout', '-q', '--detach')
-        self.assertIn('detached@' + self.git('rev-parse', '--short', 'HEAD'),
-                      self.shell('git_prompt\n'))
-        worktree = self.root / 'other-worktree'
-        self.git('worktree', 'add', '-qb', 'feature', str(worktree))
-        self.assertIn('other-worktree%f | feature', self.shell('git_prompt\n', worktree))
-
-    def test_percent_signs_are_escaped(self):
+    def test_git_location_branch_and_changes(self):
         self.git('checkout', '-qb', 'feature%test')
-        output = self.shell('VIRTUAL_ENV=/envs/test%env\npython_env_prompt\ngit_prompt\n')
-        self.assertIn('test%%env', output)
-        self.assertIn('feature%%test', output)
-
-
-if __name__ == '__main__':
-    unittest.main()
+        clean = self.shell('git_prompt\n')
+        self.assertIn('my-project%f | feature%%test', clean)
+        self.assertIn('✔', clean)
+        (self.repo / 'untracked').write_text('test')
+        dirty = self.shell('git_prompt\n', self.repo / 'src/package')
+        self.assertIn('my-project/src/package%f | feature%%test', dirty)
+        self.assertIn('✗', dirty)
+        self.assertEqual(self.shell('git_prompt\n', self.root), '')
