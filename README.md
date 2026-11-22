@@ -1,27 +1,13 @@
 # dotfiles
 
-My Zsh config.
-
-## Install
+Portable Zsh setup for a new machine.
 
 ```sh
 git clone https://github.com/akarimbux/dotfiles.git ~/.dotfiles
-cd ~/.dotfiles
-./install.sh --with-tools   # or just ./install.sh to link the config only
-exec zsh
+~/.dotfiles/install.sh --with-tools
 ```
 
-`install.sh` symlinks `configs/.zshrc` to `~/.zshrc`, moving any existing file
-to `~/.zshrc.backup`. `--with-tools` also installs zsh, git, eza, jq, fzf,
-zoxide, uv and the autosuggestions/syntax-highlighting plugins using Homebrew
-(macOS) or apt (Debian/Ubuntu).
+Links `configs/.zshrc` to `~/.zshrc` (existing file moved to `~/.zshrc.backup`).
+`--with-tools` installs zsh, git, fzf, zoxide, eza, jq, uv and Zsh plugins via Homebrew or apt.
 
-## What's included
-
-- Prompt showing the active Python env, current directory, and Git branch/status
-- History shared across terminals, prefix search with the arrow keys
-- fzf, zoxide, autosuggestions and syntax highlighting when installed
-- Aliases: `ll`, `la`, `..`, `cls`, and `e`/`el`/`ea`/`et` for eza
-- `venv [version]`: create `.venv` with uv if missing, then activate it
-
-Machine-specific settings go in `~/.zshrc.local`, aliases in `~/.zsh_aliases`.
+Machine-specific settings go in `~/.zshrc.local`.

@@ -6,7 +6,7 @@ repo_dir=$(cd "$(dirname "$0")" && pwd)
 target=${ZDOTDIR:-$HOME}/.zshrc
 
 if [[ ${1:-} == --with-tools ]]; then
-  packages=(zsh git eza jq fzf zoxide zsh-autosuggestions zsh-syntax-highlighting)
+  packages=(zsh git fzf zoxide eza jq zsh-autosuggestions zsh-syntax-highlighting)
   if command -v brew >/dev/null; then
     brew install "${packages[@]}" uv
   elif command -v apt-get >/dev/null; then
