@@ -1,0 +1,2 @@
+# Use uv-managed Pythons only, so every machine runs the same builds.
+python-preference = "only-managed"

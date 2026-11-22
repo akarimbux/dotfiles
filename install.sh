@@ -3,7 +3,6 @@
 set -euo pipefail
 
 repo_dir=$(cd "$(dirname "$0")" && pwd)
-target=${ZDOTDIR:-$HOME}/.zshrc
 
 if [[ ${1:-} == --with-tools ]]; then
   packages=(zsh git fzf zoxide eza jq zsh-autosuggestions zsh-syntax-highlighting)
@@ -20,9 +19,17 @@ if [[ ${1:-} == --with-tools ]]; then
   fi
 fi
 
-if [[ -e $target && ! -L $target ]]; then
-  mv "$target" "$target.backup"
-  echo "Backed up existing config to $target.backup"
-fi
-ln -sfn "$repo_dir/configs/.zshrc" "$target"
-echo "Linked $target. Run: exec zsh"
+link() {
+  mkdir -p "$(dirname "$2")"
+  if [[ -e $2 && ! -L $2 ]]; then
+    mv "$2" "$2.backup" && echo "Backed up $2 to $2.backup"
+  fi
+  ln -sfn "$repo_dir/configs/$1" "$2" && echo "Linked $2"
+}
+
+config=${XDG_CONFIG_HOME:-$HOME/.config}
+link .zshrc "${ZDOTDIR:-$HOME}/.zshrc"
+link gitconfig "$config/git/config"
+link uv.toml "$config/uv/uv.toml"
+touch ~/.gitconfig  # so `git config --global` writes here, not into this repo
+echo "Run: exec zsh"
