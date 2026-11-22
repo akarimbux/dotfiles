@@ -1,0 +1,14 @@
+# Name, email and anything machine-specific go in ~/.gitconfig, which overrides this.
+[init]
+	defaultBranch = main
+[pull]
+	ff = only
+[push]
+	autoSetupRemote = true
+[fetch]
+	prune = true
+[diff]
+	algorithm = histogram
+[alias]
+	st = status -sb
+	lg = log --oneline --graph --decorate -20
