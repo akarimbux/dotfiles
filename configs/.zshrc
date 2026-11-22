@@ -3,17 +3,6 @@ typeset -U path
 path=("$HOME/bin" "$HOME/.local/bin" $path)
 export PATH
 
-# Find the guide beside this sourced config, following the installed symlink.
-typeset -g DOTFILES_MANUAL="${${(%):-%x}:A:h:h}/README.md"
-typeset -g DOTFILES_HELPER="${${(%):-%x}:A:h}/dothelp.sh"
-dothelp() {
-  if [[ ! -r $DOTFILES_HELPER ]]; then
-    print -u2 -- "Setup helper not found: $DOTFILES_HELPER"
-    return 1
-  fi
-  DOTFILES_MANUAL="$DOTFILES_MANUAL" command bash "$DOTFILES_HELPER" "$@"
-}
-
 # Enable extended globbing and better autocompletion
 setopt EXTENDED_GLOB
 autoload -Uz compinit && compinit -i
@@ -26,30 +15,9 @@ if (( $+commands[uvx] )); then
   eval "$(uvx --generate-shell-completion zsh)"
 fi
 
-# Python environments: venv [python-version] creates once, then activates.
+# venv [python-version]: create .venv with uv if missing, then activate it.
 venv() {
-  if (( $# > 1 )); then
-    print -u2 'Usage: venv [python-version]'
-    return 2
-  fi
-  if ! (( $+commands[uv] )); then
-    print -u2 'uv is missing. Run bash install.sh --with-tools from your dotfiles folder.'
-    return 1
-  fi
-  if [[ ! -e .venv && ! -L .venv ]]; then
-    if (( $# )); then
-      uv venv --python "$1" .venv || return
-    else
-      uv venv .venv || return
-    fi
-  elif (( $# )); then
-    print -u2 'A .venv already exists. Run venv without a version to activate it.'
-    return 1
-  fi
-  if [[ ! -f .venv/bin/activate ]]; then
-    print -u2 'Existing .venv has no activation script; leaving it unchanged.'
-    return 1
-  fi
+  [[ -d .venv ]] || uv venv ${1:+--python} $1 .venv || return
   source .venv/bin/activate
 }
 
@@ -148,29 +116,16 @@ setopt AUTO_CD AUTO_PUSHD PUSHD_TO_HOME PUSHD_IGNORE_DUPS
 # Custom behavior for less
 export LESS='-R'
 
-# Personal aliases first, then machine-specific overrides.
-for _local_config in ~/.zsh_aliases ~/.zshrc.local; do
-  [[ ! -f $_local_config ]] || source "$_local_config"
-done
-unset _local_config
+# Personal aliases and machine-specific settings
+[[ -f ~/.zsh_aliases ]] && source ~/.zsh_aliases
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
-# Optional fuzzy search: Ctrl-R history, Ctrl-T files, Alt-C directories
-if (( $+commands[fzf] )) && [[ -t 0 ]]; then
-  if _fzf_init=$(fzf --zsh 2>/dev/null); then
-    eval "$_fzf_init"
-  else
-    # Older fzf packages provide integration as separate scripts.
-    for _fzf_dir in "$HOME/.fzf/shell" \
-      "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/fzf/shell" \
-      /usr/local/opt/fzf/shell /usr/share/fzf /usr/share/doc/fzf/examples; do
-      if [[ -r "$_fzf_dir/key-bindings.zsh" ]]; then
-        [[ ! -r "$_fzf_dir/completion.zsh" ]] || source "$_fzf_dir/completion.zsh"
-        source "$_fzf_dir/key-bindings.zsh"
-        break
-      fi
-    done
-  fi
-  unset _fzf_init _fzf_dir
+# fzf: Ctrl-R history, Ctrl-T files, Alt-C directories
+if (( $+commands[fzf] )); then
+  # Older fzf (e.g. Ubuntu 22.04) has no --zsh flag
+  _fzf_init=$(fzf --zsh 2>/dev/null) && eval "$_fzf_init" ||
+    source /usr/share/doc/fzf/examples/key-bindings.zsh 2>/dev/null
+  unset _fzf_init
 fi
 
 # Learn frequently visited directories; jump with z and select with zi.
@@ -178,15 +133,10 @@ if (( $+commands[zoxide] )); then
   eval "$(zoxide init zsh)"
 fi
 
-# Optional plugins installed by a package manager or cloned locally.
+# Plugins (Homebrew or apt locations)
 for _plugin in zsh-autosuggestions zsh-syntax-highlighting; do
-  for _plugin_root in "${ZSH_PLUGIN_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins}" \
-    "$HOME/.zsh" "${HOMEBREW_PREFIX:-/opt/homebrew}/share" \
-    /usr/local/share /usr/share; do
-    if [[ -r "$_plugin_root/$_plugin/$_plugin.zsh" ]]; then
-      source "$_plugin_root/$_plugin/$_plugin.zsh"
-      break
-    fi
+  for _dir in "${HOMEBREW_PREFIX:-/opt/homebrew}/share" /usr/local/share /usr/share; do
+    [[ -r $_dir/$_plugin/$_plugin.zsh ]] && source "$_dir/$_plugin/$_plugin.zsh" && break
   done
 done
-unset _plugin _plugin_root
+unset _plugin _dir
